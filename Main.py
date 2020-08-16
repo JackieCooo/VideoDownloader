@@ -9,6 +9,9 @@ class VideoDownloader(object):
     def __init__(self):
         self.engine_list = ['b站', '...']
         self.sess = None
+        self.video = None
+        self.audio = None
+        self.video_info = []
 
     def setup_ui(self):
         self.main_window = QtWidgets.QMainWindow()
@@ -186,9 +189,27 @@ class VideoDownloader(object):
             pass
 
     def search(self, url):
-        filename, duration, video, audio = self.sess.get_info(url)
-        self.table.insertRow(self.table.rowCount())
-        self.table.setRowHeight(self.table.rowCount()-1, 124)
+        filename, duration, self.video, self.audio = self.sess.get_info(url)
+
+        # 计算时长
+        minute = int(duration / 60000)
+        second = int(duration / 1000 - minute * 60)
+        time = f"{minute}:{second}"
+
+        # 保存视频信息
+        temp = [self.set_pic(), filename, time, self.set_quality_select(duration), self.set_dl_btn()]
+        self.video_info.append(temp)
+        self.show_result()  # 展示视频信息
+
+    def size_count(self, vq, aq, duration):
+        size = (duration / 1000) * (self.video[vq][2] + self.audio[aq][2]) / 8000000
+        size = str(round(size, 2)) + 'M'
+        item = QtWidgets.QTableWidgetItem(size)
+        item.setTextAlignment(QtCore.Qt.AlignCenter)
+        self.table.setItem(self.table.rowCount()-1, 3, item)
+
+    def set_pic(self):
+        # 设置缩略图
         front = QtWidgets.QLabel()
         front.resize(220, 124)
         pic = QtGui.QPixmap("./temp/pic.jpg")
@@ -196,17 +217,20 @@ class VideoDownloader(object):
         front.setPixmap(pic)
         front.setAlignment(QtCore.Qt.AlignCenter)
         front.setScaledContents(True)
-        self.table.setCellWidget(0, 0, front)
-        item = QtWidgets.QTableWidgetItem(filename)
-        self.table.setItem(self.table.rowCount()-1, 1, item)
-        item = QtWidgets.QTableWidgetItem(duration)
-        self.table.setItem(self.table.rowCount()-1, 2, item)
-        choose_vq = QtWidgets.QComboBox()
+        return front
+
+    def set_quality_select(self, duration):
+        # 设置画质选择器
+        box1 = QtWidgets.QWidget()
+        v_box_1 = QtWidgets.QVBoxLayout(box1)
+        v_box_1.setSpacing(0)
+        v_box_1.setContentsMargins(0, 0, 0, 0)
+        choose_vq = QtWidgets.QComboBox(box1)
         sp = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
         choose_vq.setSizePolicy(sp)
         choose_vq.setFixedHeight(36)
         temp = []
-        for i in video:
+        for i in self.video:
             if i[0] == 112:
                 temp.append("1080p+")
             elif i[0] == 80:
@@ -242,8 +266,32 @@ class VideoDownloader(object):
         font.setPointSize(10)
         choose_vq.setFont(font)
         choose_vq.setCursor(QtCore.Qt.PointingHandCursor)
-        # choose_vq.currentIndexChanged.connect()  # 搜索引擎切换
-        self.table.setCellWidget(self.table.rowCount()-1, 4, choose_vq)
+        self.size_count(choose_vq.currentIndex(), 0, duration)
+        choose_vq.currentIndexChanged.connect(lambda: self.size_count(choose_vq.currentIndex(), 0, duration))
+        v_box_1.addWidget(choose_vq)
+        return box1
+
+    def set_dl_btn(self):
+        # 设置开始下载按钮
+        box2 = QtWidgets.QWidget()
+        v_box_2 = QtWidgets.QVBoxLayout(box2)
+        dl_btn = QtWidgets.QPushButton(box2)
+        # dl_btn.clicked.connect()  # 设置下载按钮触发
+        v_box_2.addWidget(dl_btn)
+        return box2
+
+    def show_result(self):
+        self.table.insertRow(self.table.rowCount())
+        row = self.table.rowCount() - 1
+        self.table.setRowHeight(row, 124)
+        self.table.setCellWidget(row, 0, self.video_info[row][0])
+        item = QtWidgets.QTableWidgetItem(self.video_info[row][1])
+        self.table.setItem(row, 1, item)
+        item = QtWidgets.QTableWidgetItem(self.video_info[row][2])
+        item.setTextAlignment(QtCore.Qt.AlignCenter)
+        self.table.setItem(row, 2, item)
+        self.table.setCellWidget(row, 4, self.video_info[row][3])
+        self.table.setCellWidget(row, 5, self.video_info[row][4])
 
 
 if __name__ == "__main__":
@@ -251,7 +299,7 @@ if __name__ == "__main__":
     run = VideoDownloader()
     run.setup_ui()
     run.engine_switch()
-    # run.search("https://www.bilibili.com/video/BV1zV411k7pr")
+    run.search("https://www.bilibili.com/video/BV1zV411k7pr")
     with open('StyleSheet.qss', 'r') as f:
         style = f.read()
     app.setStyleSheet(style)
