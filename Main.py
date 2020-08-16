@@ -251,7 +251,7 @@ if __name__ == "__main__":
     run = VideoDownloader()
     run.setup_ui()
     run.engine_switch()
-    run.search("https://www.bilibili.com/video/BV1zV411k7pr")
+    # run.search("https://www.bilibili.com/video/BV1zV411k7pr")
     with open('StyleSheet.qss', 'r') as f:
         style = f.read()
     app.setStyleSheet(style)
