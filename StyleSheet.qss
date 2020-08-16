@@ -1,0 +1,27 @@
+#left_widget {
+    background-color: red;
+}
+
+#download_page {
+    background-color: blue;
+}
+
+#search_area {
+    background-color: green;
+}
+
+#logo {
+    background-color: yellow;
+}
+
+QTabBar::tab:first {
+    margin-left: 350px;
+}
+
+QTabBar::tab:middle {
+    margin-left: 10px;
+}
+
+QTabBar::tab:last {
+    margin-left: 10px;
+}
