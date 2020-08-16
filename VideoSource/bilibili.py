@@ -61,22 +61,36 @@ class bilibiliVideo(object):
         # print(response)
         res = eval(re.search(r'(?<=window.__playinfo__=).*?(?=</script><script>)', response).group())["data"]["dash"]  # 类型为dict
         # print(res)
+        pre_id = 0
+        now_id = 0
         for i in res["video"]:
             temp = [i["id"], i["baseUrl"], i["bandwidth"]]
-            self.video_url.append(temp)
+            now_id = i["id"]
+            if now_id != pre_id:
+                self.video_url.append(temp)
+                pre_id = now_id
+            else:
+                continue
         # print(self.video_url)
+        pre_id = 0
+        now_id = 0
         for i in res["audio"]:
             temp = [i["id"], i["baseUrl"], i["bandwidth"]]
-            self.audio_url.append(temp)
+            now_id = i["id"]
+            if now_id != pre_id:
+                self.audio_url.append(temp)
+                pre_id = now_id
+            else:
+                continue
         # print(self.audio_url)
-        self.filename = re.search(r'(?<="title":").*?(?=",)', response).group(0)
+        self.filename = re.search(r'(?<="title":").*?(?=",)', response).group(0)  # 获取名字
         # print(self.filename)
-        self.duration = int(re.search(r'(?<="timelength":).*?(?=,)', response).group())
-        pic_url = re.search(r'(?<=itemprop="image" content=").*?(?=">)', response).group(0)
-        pic = requests.get(url=pic_url, headers=self.header1).content  # 获取封面图
-        with open('../temp/pic.jpg', 'wb') as f:
-            f.write(pic)
-        return self.filename, self.duration
+        self.duration = int(re.search(r'(?<="timelength":).*?(?=,)', response).group())  # 获取时长
+        # pic_url = re.search(r'(?<=itemprop="image" content=").*?(?=">)', response).group(0)
+        # pic = requests.get(url=pic_url, headers=self.header1).content  # 获取封面图
+        # with open('./temp/pic.jpg', 'wb') as f:
+        #     f.write(pic)
+        return self.filename, self.duration, self.video_url, self.audio_url
 
     def download(self, vq, aq):
         print("下载视频")
@@ -126,4 +140,4 @@ class bilibiliVideo(object):
 
 if __name__ == '__main__':
     app = bilibiliVideo()
-    # app.run()
+    app.get_info("https://www.bilibili.com/video/BV1zV411k7pr")

@@ -98,8 +98,8 @@ class VideoDownloader(object):
         self.engine.setPalette(palette)
         self.engine.setLineEdit(combobox_text)
         combobox_drop_down = QtWidgets.QListWidget()  # 设置combobox下拉菜单字体
-        for i in range(2):
-            item = QtWidgets.QListWidgetItem(self.engine_list[i])
+        for i in self.engine_list:
+            item = QtWidgets.QListWidgetItem(i)
             item.setTextAlignment(QtCore.Qt.AlignCenter)
             combobox_drop_down.addItem(item)
         self.engine.setModel(combobox_drop_down.model())
@@ -141,7 +141,7 @@ class VideoDownloader(object):
         self.table.horizontalHeader().setStretchLastSection(True)
         self.table.verticalHeader().setVisible(False)
         self.table.horizontalHeader().resizeSection(0, 220)
-        self.table.horizontalHeader().resizeSection(1, 350)
+        self.table.horizontalHeader().resizeSection(1, 300)
         self.table.horizontalHeader().resizeSection(2, 100)
         self.table.horizontalHeader().resizeSection(3, 100)
         self.table.horizontalHeader().resizeSection(4, 100)
@@ -185,8 +185,65 @@ class VideoDownloader(object):
         elif self.engine.currentIndex() == 5:
             pass
 
-    def search(self, text):
-        pass
+    def search(self, url):
+        filename, duration, video, audio = self.sess.get_info(url)
+        self.table.insertRow(self.table.rowCount())
+        self.table.setRowHeight(self.table.rowCount()-1, 124)
+        front = QtWidgets.QLabel()
+        front.resize(220, 124)
+        pic = QtGui.QPixmap("./temp/pic.jpg")
+        pic.scaled(220, 124, QtCore.Qt.KeepAspectRatio)
+        front.setPixmap(pic)
+        front.setAlignment(QtCore.Qt.AlignCenter)
+        front.setScaledContents(True)
+        self.table.setCellWidget(0, 0, front)
+        item = QtWidgets.QTableWidgetItem(filename)
+        self.table.setItem(self.table.rowCount()-1, 1, item)
+        item = QtWidgets.QTableWidgetItem(duration)
+        self.table.setItem(self.table.rowCount()-1, 2, item)
+        choose_vq = QtWidgets.QComboBox()
+        sp = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
+        choose_vq.setSizePolicy(sp)
+        choose_vq.setFixedHeight(36)
+        temp = []
+        for i in video:
+            if i[0] == 112:
+                temp.append("1080p+")
+            elif i[0] == 80:
+                temp.append("1080p")
+            elif i[0] == 64:
+                temp.append("720p")
+            elif i[0] == 32:
+                temp.append("480p")
+            elif i[0] == 16:
+                temp.append("360p")
+        choose_vq.setFrame(True)
+        text = QtWidgets.QLineEdit()  # 设置combobox字体
+        text.setReadOnly(True)
+        text.setAlignment(QtCore.Qt.AlignCenter)
+        palette = QtGui.QPalette()
+        brush = QtGui.QBrush(QtGui.QColor(0, 0, 0))
+        brush.setStyle(QtCore.Qt.SolidPattern)
+        palette.setBrush(QtGui.QPalette.Active, QtGui.QPalette.Text, brush)
+        palette.setBrush(QtGui.QPalette.Inactive, QtGui.QPalette.Text, brush)
+        palette.setBrush(QtGui.QPalette.Disabled, QtGui.QPalette.Text, brush)
+        choose_vq.setPalette(palette)
+        choose_vq.setLineEdit(text)
+        combobox_drop_down = QtWidgets.QListWidget()  # 设置combobox下拉菜单字体
+        for i in temp:
+            item = QtWidgets.QListWidgetItem(i)
+            item.setTextAlignment(QtCore.Qt.AlignCenter)
+            combobox_drop_down.addItem(item)
+        choose_vq.setModel(combobox_drop_down.model())
+        choose_vq.setView(combobox_drop_down)
+        font = QtGui.QFont()
+        font.setFamily("微软雅黑")
+        font.setBold(True)
+        font.setPointSize(10)
+        choose_vq.setFont(font)
+        choose_vq.setCursor(QtCore.Qt.PointingHandCursor)
+        # choose_vq.currentIndexChanged.connect()  # 搜索引擎切换
+        self.table.setCellWidget(self.table.rowCount()-1, 4, choose_vq)
 
 
 if __name__ == "__main__":
@@ -194,6 +251,7 @@ if __name__ == "__main__":
     run = VideoDownloader()
     run.setup_ui()
     run.engine_switch()
+    run.search("https://www.bilibili.com/video/BV1zV411k7pr")
     with open('StyleSheet.qss', 'r') as f:
         style = f.read()
     app.setStyleSheet(style)
