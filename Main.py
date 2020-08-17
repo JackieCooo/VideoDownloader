@@ -11,6 +11,7 @@ class VideoDownloader(object):
         self.sess = None
         self.video = None
         self.audio = None
+        self.num = 0  # 记录表格行数，便于动态调整
         self.video_info = []
 
     def setup_ui(self):
@@ -189,24 +190,29 @@ class VideoDownloader(object):
             pass
 
     def search(self, url):
+        self.num += 1
+
         filename, duration, self.video, self.audio = self.sess.get_info(url)
 
         # 计算时长
         minute = int(duration / 60000)
         second = int(duration / 1000 - minute * 60)
-        time = f"{minute}:{second}"
+        if second < 10:
+            time = f"{minute}:0{second}"
+        else:
+            time = f"{minute}:{second}"
 
         # 保存视频信息
-        temp = [self.set_pic(), filename, time, self.set_quality_select(duration), self.set_dl_btn()]
+        temp = [self.set_pic(), filename, time, self.set_quality_select(duration, self.num), self.set_dl_btn(self.num)]
         self.video_info.append(temp)
         self.show_result()  # 展示视频信息
 
-    def size_count(self, vq, aq, duration):
+    def size_count(self, vq, aq, duration, num):
         size = (duration / 1000) * (self.video[vq][2] + self.audio[aq][2]) / 8000000
         size = str(round(size, 2)) + 'M'
         item = QtWidgets.QTableWidgetItem(size)
         item.setTextAlignment(QtCore.Qt.AlignCenter)
-        self.table.setItem(self.table.rowCount()-1, 3, item)
+        self.table.setItem(num-1, 3, item)
 
     def set_pic(self):
         # 设置缩略图
@@ -219,7 +225,7 @@ class VideoDownloader(object):
         front.setScaledContents(True)
         return front
 
-    def set_quality_select(self, duration):
+    def set_quality_select(self, duration, num):
         # 设置画质选择器
         box1 = QtWidgets.QWidget()
         v_box_1 = QtWidgets.QVBoxLayout(box1)
@@ -254,6 +260,7 @@ class VideoDownloader(object):
         choose_vq.setPalette(palette)
         choose_vq.setLineEdit(text)
         combobox_drop_down = QtWidgets.QListWidget()  # 设置combobox下拉菜单字体
+        combobox_drop_down.clear()
         for i in temp:
             item = QtWidgets.QListWidgetItem(i)
             item.setTextAlignment(QtCore.Qt.AlignCenter)
@@ -266,17 +273,18 @@ class VideoDownloader(object):
         font.setPointSize(10)
         choose_vq.setFont(font)
         choose_vq.setCursor(QtCore.Qt.PointingHandCursor)
-        self.size_count(choose_vq.currentIndex(), 0, duration)
-        choose_vq.currentIndexChanged.connect(lambda: self.size_count(choose_vq.currentIndex(), 0, duration))
+        self.size_count(choose_vq.currentIndex(), 0, duration, num)
+        choose_vq.currentIndexChanged.connect(lambda: self.size_count(choose_vq.currentIndex(), 0, duration, num))
         v_box_1.addWidget(choose_vq)
+        del temp
         return box1
 
-    def set_dl_btn(self):
+    def set_dl_btn(self, num):
         # 设置开始下载按钮
         box2 = QtWidgets.QWidget()
         v_box_2 = QtWidgets.QVBoxLayout(box2)
         dl_btn = QtWidgets.QPushButton(box2)
-        # dl_btn.clicked.connect()  # 设置下载按钮触发
+        dl_btn.clicked.connect(lambda: self.sess.download())  # 设置下载按钮触发
         v_box_2.addWidget(dl_btn)
         return box2
 
@@ -299,7 +307,7 @@ if __name__ == "__main__":
     run = VideoDownloader()
     run.setup_ui()
     run.engine_switch()
-    run.search("https://www.bilibili.com/video/BV1zV411k7pr")
+    # run.search("https://www.bilibili.com/video/BV1zV411k7pr")
     with open('StyleSheet.qss', 'r') as f:
         style = f.read()
     app.setStyleSheet(style)
