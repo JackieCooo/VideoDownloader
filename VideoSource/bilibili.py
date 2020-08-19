@@ -27,32 +27,32 @@ class bilibiliVideo(object):
         # self.video_url = []  # 112:1080p+ 80:1080p 64:720p 32:480p 16:360p
         # self.audio_url = []  # 30280: 160kbps 30216: 80kbps
         self.filename = None
-        self.size = None
+        # self.size = None
         # self.vq = 0  # 视频质量: 0:最高画质优先 1:1080p+ 2:1080p 3:720p 4:480p 5:360p
         # self.aq = 0  # 音频质量: 0:最高音质优先 1:160kbps 2:80kbps
         self.duration = None
 
-    def get_video(self, url):
-        self.header2.update({'Range': f'bytes=0-{self.size}'})
+    def get_video(self, url, size):
+        self.header2.update({'Range': f'bytes=0-{size}'})
         res = requests.get(url=url, headers=self.header2)
-        with open('../temp/video.flv', 'wb') as f:
+        with open('./temp/video.flv', 'wb') as f:
             for data in res.iter_content(1024):
                 f.write(data)
 
-    def get_audio(self, url):
-        self.header2.update({'Range': f'bytes=0-{self.size}'})
+    def get_audio(self, url, size):
+        self.header2.update({'Range': f'bytes=0-{size}'})
         res = requests.get(url=url, headers=self.header2)
-        with open('../temp/audio.mp3', 'wb') as f:
+        with open('./temp/audio.mp3', 'wb') as f:
             for data in res.iter_content(1024):
                 f.write(data)
 
     def merge_file(self):
-        video_path = "../temp/video.flv"
-        audio_path = "../temp/audio.mp3"
-        os.system("ffmpeg -i " + video_path + " -i " + audio_path + " -codec copy ../downloads/final.mp4")
-        os.rename("../downloads/final.mp4", f"../downloads/{self.filename}.mp4")
-        os.remove("../temp/video.flv")
-        os.remove("../temp/audio.mp3")
+        video_path = "./temp/video.flv"
+        audio_path = "./temp/audio.mp3"
+        os.system("ffmpeg -i " + video_path + " -i " + audio_path + " -codec copy ./downloads/final.mp4")
+        os.rename("./downloads/final.mp4", f"./downloads/{self.filename}.mp4")
+        os.remove("./temp/video.flv")
+        os.remove("./temp/audio.mp3")
 
     def get_info(self, url):
         video_url = []
@@ -94,9 +94,10 @@ class bilibiliVideo(object):
             f.write(pic)
         return self.filename, self.duration, video_url, audio_url
 
-    def download(self, vq, aq):
-        # self.merge_file()
-        pass
+    def download(self, v_url, a_url, v_size, a_size):
+        self.get_video(v_url, v_size)
+        self.get_audio(a_url, a_size)
+        self.merge_file()
 
 
 if __name__ == '__main__':

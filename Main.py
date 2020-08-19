@@ -5,12 +5,15 @@ from VideoSource import bilibili
 
 
 class VideoDownloader(object):
+    """
+    bug: 队列超过一个视频源时，画质选择会有冲突
+    """
 
     def __init__(self):
         self.engine_list = ['b站', '...']
         self.sess = None
-        self.video = None
-        self.audio = None
+        self.video = []
+        self.audio = []
         self.num = 0  # 记录表格行数，便于动态调整
         self.video_info = []
 
@@ -136,12 +139,10 @@ class VideoDownloader(object):
         font.setPointSize(10)
         self.table.setFont(font)
         self.table.setColumnCount(6)
-        # self.table.setRowCount(20)
         self.table.setHorizontalHeaderLabels(['', '视频名', '时长', '大小', '画质', ''])
         self.table.setMouseTracking(True)
         self.table.setSelectionMode(QtWidgets.QAbstractItemView.NoSelection)
         self.table.setShowGrid(False)
-        self.table.setGridStyle(QtCore.Qt.NoPen)
         self.table.horizontalHeader().setStretchLastSection(True)
         self.table.verticalHeader().setVisible(False)
         self.table.horizontalHeader().resizeSection(0, 220)
@@ -154,13 +155,16 @@ class VideoDownloader(object):
 
         # 正在下载
         self.downloading = QtWidgets.QWidget()
-
-        # 已完成
-        self.finished = QtWidgets.QWidget()
+        self.list = QtWidgets.QListWidget(self.downloading)
+        self.list.setGeometry(QtCore.QRect(0, 0, 950, 700))
+        font = QtGui.QFont()
+        font.setFamily("微软雅黑")
+        font.setPointSize(10)
+        self.list.setFont(font)
+        self.list.addItem('test')
 
         self.info_box.addTab(self.sequence, "队列")
         self.info_box.addTab(self.downloading, "正在下载")
-        self.info_box.addTab(self.finished, "已完成")
 
         # 设置设置页
         self.option_page = QtWidgets.QWidget()
@@ -192,7 +196,9 @@ class VideoDownloader(object):
     def search(self, url):
         self.num += 1
 
-        filename, duration, self.video, self.audio = self.sess.get_info(url)
+        filename, duration, temp1, temp2 = self.sess.get_info(url)
+        self.video.append(temp1)
+        self.audio.append(temp2)
 
         # 计算时长
         minute = int(duration / 60000)
@@ -203,18 +209,22 @@ class VideoDownloader(object):
             time = f"{minute}:{second}"
 
         # 保存视频信息
-        temp = [self.set_pic(), filename, time, self.set_quality_select(duration, self.num), self.set_dl_btn(self.num)]
-        self.video_info.append(temp)
+        temp3 = [self.set_pic(), filename, time, self.set_quality_select(duration, self.num), self.set_dl_btn(self.num, duration)]
+        self.video_info.append(temp3)
+
         self.show_result()  # 展示视频信息
 
+        self.size_count(self.choose_vq.currentIndex(), 0, duration, self.num)
+
     def size_count(self, vq, aq, duration, num):
-        size = (duration / 1000) * (self.video[vq][2] + self.audio[aq][2]) / 8000000
+        size = (duration / 1000) * (self.video[num-1][vq][2] + self.audio[num-1][aq][2]) / 8000000
         size = str(round(size, 2)) + 'M'
         item = QtWidgets.QTableWidgetItem(size)
         item.setTextAlignment(QtCore.Qt.AlignCenter)
         self.table.setItem(num-1, 3, item)
 
-    def set_pic(self):
+    @staticmethod
+    def set_pic():
         # 设置缩略图
         front = QtWidgets.QLabel()
         front.resize(220, 124)
@@ -231,12 +241,12 @@ class VideoDownloader(object):
         v_box_1 = QtWidgets.QVBoxLayout(box1)
         v_box_1.setSpacing(0)
         v_box_1.setContentsMargins(0, 0, 0, 0)
-        choose_vq = QtWidgets.QComboBox(box1)
+        self.choose_vq = QtWidgets.QComboBox(box1)
         sp = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
-        choose_vq.setSizePolicy(sp)
-        choose_vq.setFixedHeight(36)
+        self.choose_vq.setSizePolicy(sp)
+        self.choose_vq.setFixedHeight(36)
         temp = []
-        for i in self.video:
+        for i in self.video[num-1]:
             if i[0] == 112:
                 temp.append("1080p+")
             elif i[0] == 80:
@@ -247,7 +257,7 @@ class VideoDownloader(object):
                 temp.append("480p")
             elif i[0] == 16:
                 temp.append("360p")
-        choose_vq.setFrame(True)
+        self.choose_vq.setFrame(True)
         text = QtWidgets.QLineEdit()  # 设置combobox字体
         text.setReadOnly(True)
         text.setAlignment(QtCore.Qt.AlignCenter)
@@ -257,34 +267,32 @@ class VideoDownloader(object):
         palette.setBrush(QtGui.QPalette.Active, QtGui.QPalette.Text, brush)
         palette.setBrush(QtGui.QPalette.Inactive, QtGui.QPalette.Text, brush)
         palette.setBrush(QtGui.QPalette.Disabled, QtGui.QPalette.Text, brush)
-        choose_vq.setPalette(palette)
-        choose_vq.setLineEdit(text)
+        self.choose_vq.setPalette(palette)
+        self.choose_vq.setLineEdit(text)
         combobox_drop_down = QtWidgets.QListWidget()  # 设置combobox下拉菜单字体
-        combobox_drop_down.clear()
         for i in temp:
             item = QtWidgets.QListWidgetItem(i)
             item.setTextAlignment(QtCore.Qt.AlignCenter)
             combobox_drop_down.addItem(item)
-        choose_vq.setModel(combobox_drop_down.model())
-        choose_vq.setView(combobox_drop_down)
+        self.choose_vq.setModel(combobox_drop_down.model())
+        self.choose_vq.setView(combobox_drop_down)
         font = QtGui.QFont()
         font.setFamily("微软雅黑")
         font.setBold(True)
         font.setPointSize(10)
-        choose_vq.setFont(font)
-        choose_vq.setCursor(QtCore.Qt.PointingHandCursor)
-        self.size_count(choose_vq.currentIndex(), 0, duration, num)
-        choose_vq.currentIndexChanged.connect(lambda: self.size_count(choose_vq.currentIndex(), 0, duration, num))
-        v_box_1.addWidget(choose_vq)
+        self.choose_vq.setFont(font)
+        self.choose_vq.setCursor(QtCore.Qt.PointingHandCursor)
+        self.choose_vq.currentIndexChanged.connect(lambda: self.size_count(self.choose_vq.currentIndex(), 0, duration, num))  # 画质选择信号触发，实时修改大小显示
+        v_box_1.addWidget(self.choose_vq)
         del temp
         return box1
 
-    def set_dl_btn(self, num):
+    def set_dl_btn(self, num, duration):
         # 设置开始下载按钮
         box2 = QtWidgets.QWidget()
         v_box_2 = QtWidgets.QVBoxLayout(box2)
         dl_btn = QtWidgets.QPushButton(box2)
-        dl_btn.clicked.connect(lambda: self.sess.download())  # 设置下载按钮触发
+        dl_btn.clicked.connect(lambda: self.download(num, self.choose_vq.currentIndex(), 0, duration))  # 设置下载按钮触发
         v_box_2.addWidget(dl_btn)
         return box2
 
@@ -300,6 +308,13 @@ class VideoDownloader(object):
         self.table.setItem(row, 2, item)
         self.table.setCellWidget(row, 4, self.video_info[row][3])
         self.table.setCellWidget(row, 5, self.video_info[row][4])
+
+    def download(self, num, vq, aq, duration):
+        print("正在下载")
+        video_size = int((duration / 1000) * self.video[num-1][vq][2] / 8)
+        audio_size = int((duration / 1000) * self.audio[num-1][aq][2] / 8)
+        self.sess.download(self.video[num-1][vq][1], self.audio[num-1][aq][1], video_size, audio_size)
+        print("下载完成")
 
 
 if __name__ == "__main__":
