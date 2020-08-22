@@ -2,11 +2,13 @@ import sys
 import os
 from PyQt5 import QtWidgets, QtGui, QtCore
 from VideoSource import bilibili
+from PIL import Image
 
 
 class VideoDownloader(object):
     """
     bug: 队列超过一个视频源时，画质选择会有冲突
+    下载队列超过一个视频会有缩略图显示问题
     """
 
     def __init__(self):
@@ -157,11 +159,7 @@ class VideoDownloader(object):
         self.downloading = QtWidgets.QWidget()
         self.list = QtWidgets.QListWidget(self.downloading)
         self.list.setGeometry(QtCore.QRect(0, 0, 950, 700))
-        font = QtGui.QFont()
-        font.setFamily("微软雅黑")
-        font.setPointSize(10)
-        self.list.setFont(font)
-        self.list.addItem('test')
+        self.list.setMouseTracking(True)
 
         self.info_box.addTab(self.sequence, "队列")
         self.info_box.addTab(self.downloading, "正在下载")
@@ -311,10 +309,60 @@ class VideoDownloader(object):
 
     def download(self, num, vq, aq, duration):
         print("正在下载")
+        item = QtWidgets.QListWidgetItem()
+        item.setSizeHint(QtCore.QSize(950, 120))
+        self.list.addItem(item)
+        delegate = Delegate()
+        self.list.setItemDelegateForRow(0, delegate)
         video_size = int((duration / 1000) * self.video[num-1][vq][2] / 8)
         audio_size = int((duration / 1000) * self.audio[num-1][aq][2] / 8)
         self.sess.download(self.video[num-1][vq][1], self.audio[num-1][aq][1], video_size, audio_size)
         print("下载完成")
+
+
+class Delegate(QtWidgets.QStyledItemDelegate):
+
+    def __init__(self):
+        super(Delegate, self).__init__()
+
+    def paint(self, painter, option, index):
+        # 绘制缩略图
+        img = Image.open("./temp/pic.jpg")
+        painter.drawPixmap(QtCore.QRect(5, 5, 195, 110), QtGui.QPixmap("./temp/pic.jpg"), QtCore.QRect(0, 0, img.width, img.height))
+
+        # 绘制视频名
+        font = painter.font()
+        font.setPixelSize(18)
+        font.setFamily('黑体')
+        painter.setFont(font)
+        title = "【舞力全开2020】switch国行彩虹节拍超高清HD1080p视频文件需要请点赞评论留邮箱"
+        painter.drawText(QtCore.QRect(210, 10, 725, 40), 0, title)
+
+        # 绘制下载信息
+        font = painter.font()
+        font.setPixelSize(15)
+        font.setFamily('微软雅黑')
+        info = "info, info, info"
+        painter.setPen(QtGui.QColor(128, 128, 128))
+        painter.drawText(QtCore.QRect(210, 60, 725, 90), 0, info)
+
+        # 绘制进度条
+        style = QtWidgets.QStyleOptionProgressBar()
+        style.rect = QtCore.QRect(210, 85, 725, 15)
+        style.minimum = 0
+        style.maximum = 100
+        style.progress = 50
+        QtWidgets.QApplication.style().drawControl(QtWidgets.QStyle.CE_ProgressBar, style, painter)
+
+        if option.state & QtWidgets.QStyle.State_MouseOver:
+            rect = option.rect
+            painter.setBrush(QtGui.QColor(0, 0, 64, 32))
+            painter.drawRect(rect.topLeft().x(), rect.topLeft().y(), rect.width(), rect.height())
+
+        if option.state & QtWidgets.QStyle.State_Selected:
+            rect = option.rect
+            painter.setBrush(QtGui.QColor(0, 0, 64, 64))
+            painter.drawRect(rect.topLeft().x(), rect.topLeft().y(), rect.width(), rect.height())
 
 
 if __name__ == "__main__":
