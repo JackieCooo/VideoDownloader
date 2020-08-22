@@ -313,19 +313,35 @@ class VideoDownloader(object):
         item = QtWidgets.QListWidgetItem()
         item.setSizeHint(QtCore.QSize(950, 120))
         self.list.addItem(item)
-        delegate = Delegate(self.video_info[num-1][1])
-        self.list.setItemDelegateForRow(0, delegate)
+        delegate = ListDelegate(self.video_info[num-1][1])
+        self.list.setItemDelegateForRow(num-1, delegate)
         video_size = int((duration / 1000) * self.video[num-1][vq][2] / 8)
+        video_res = self.sess.get_video(self.video[num-1][vq][1], video_size)
+        # filesize = requests.get(url=url2, headers=header2, stream=True).headers['Content-Length']
+        filesize = video_res.headers['Content-Length']
+        filepath = "./temp/video.flv"
+        fileobj = open(filepath, 'wb')
+
+        # 创建下载线程
+        download_thread = DownloadThread(video_res, filesize, fileobj, buffer=10240)
+        download_thread.download_proess_signal.connect(self.set_prosess)
+        download_thread.start()
         audio_size = int((duration / 1000) * self.audio[num-1][aq][2] / 8)
-        self.sess.download(self.video[num-1][vq][1], self.audio[num-1][aq][1], video_size, audio_size)
+        # self.sess.download(self.video[num-1][vq][1], self.audio[num-1][aq][1], video_size, audio_size)
         print("下载完成")
 
+    def set_prosess(self, val):
+        delegate = ListDelegate(val)
+        self.list.setItemDelegateForRow(0, delegate)
 
-class Delegate(QtWidgets.QStyledItemDelegate):
 
-    def __init__(self, name):
-        super(Delegate, self).__init__()
+
+class ListDelegate(QtWidgets.QStyledItemDelegate):
+
+    def __init__(self, name, val=0):
+        super(ListDelegate, self).__init__()
         self.name = name
+        self.val = val
 
     def paint(self, painter, option, index):
         # 绘制缩略图
@@ -353,7 +369,7 @@ class Delegate(QtWidgets.QStyledItemDelegate):
         style.rect = QtCore.QRect(210, 85, 725, 15)
         style.minimum = 0
         style.maximum = 100
-        style.progress = 50
+        style.progress = self.val
         QtWidgets.QApplication.style().drawControl(QtWidgets.QStyle.CE_ProgressBar, style, painter)
 
         if option.state & QtWidgets.QStyle.State_MouseOver:
@@ -367,12 +383,43 @@ class Delegate(QtWidgets.QStyledItemDelegate):
             painter.drawRect(rect.topLeft().x(), rect.topLeft().y(), rect.width(), rect.height())
 
 
+class DownloadThread(QtCore.QThread):
+    download_proess_signal = QtCore.pyqtSignal(int)  # 创建信号
+
+    def __init__(self, res, filesize, fileobj, buffer):
+        super(DownloadThread, self).__init__()
+        self.filesize = filesize
+        self.fileobj = fileobj
+        self.buffer = buffer
+        self.res = res
+
+    def run(self):
+        try:
+            rsp = self.res  # 流下载模式
+            offset = 0
+            for chunk in rsp.iter_content(chunk_size=self.buffer):
+                if not chunk: break
+                self.fileobj.seek(offset)  # 设置指针位置
+                self.fileobj.write(chunk)  # 写入文件
+                offset = offset + len(chunk)
+                # print(f'offset:{offset}')
+                proess = offset / int(self.filesize) * 93  # 93%为视频下载完成
+                # print(f'proess:{proess}')
+                self.download_proess_signal.emit(int(proess))  # 发送信号
+
+            self.fileobj.close()  # 关闭文件
+            self.exit(0)  # 关闭线程
+
+        except Exception as e:
+            print(e)
+
+
+
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     run = VideoDownloader()
     run.setup_ui()
     run.engine_switch()
-    # run.search("https://www.bilibili.com/video/BV1zV411k7pr")
     with open('StyleSheet.qss', 'r') as f:
         style = f.read()
     app.setStyleSheet(style)
