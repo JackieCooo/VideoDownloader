@@ -160,6 +160,7 @@ class VideoDownloader(object):
         self.list = QtWidgets.QListWidget(self.downloading)
         self.list.setGeometry(QtCore.QRect(0, 0, 950, 700))
         self.list.setMouseTracking(True)
+        self.list.setFrameStyle(0)
 
         self.info_box.addTab(self.sequence, "队列")
         self.info_box.addTab(self.downloading, "正在下载")
@@ -312,7 +313,7 @@ class VideoDownloader(object):
         item = QtWidgets.QListWidgetItem()
         item.setSizeHint(QtCore.QSize(950, 120))
         self.list.addItem(item)
-        delegate = Delegate()
+        delegate = Delegate(self.video_info[num-1][1])
         self.list.setItemDelegateForRow(0, delegate)
         video_size = int((duration / 1000) * self.video[num-1][vq][2] / 8)
         audio_size = int((duration / 1000) * self.audio[num-1][aq][2] / 8)
@@ -322,8 +323,9 @@ class VideoDownloader(object):
 
 class Delegate(QtWidgets.QStyledItemDelegate):
 
-    def __init__(self):
+    def __init__(self, name):
         super(Delegate, self).__init__()
+        self.name = name
 
     def paint(self, painter, option, index):
         # 绘制缩略图
@@ -335,8 +337,8 @@ class Delegate(QtWidgets.QStyledItemDelegate):
         font.setPixelSize(18)
         font.setFamily('黑体')
         painter.setFont(font)
-        title = "【舞力全开2020】switch国行彩虹节拍超高清HD1080p视频文件需要请点赞评论留邮箱"
-        painter.drawText(QtCore.QRect(210, 10, 725, 40), 0, title)
+        # title = "【舞力全开2020】switch国行彩虹节拍超高清HD1080p视频文件需要请点赞评论留邮箱"
+        painter.drawText(QtCore.QRect(210, 10, 725, 40), 0, self.name)
 
         # 绘制下载信息
         font = painter.font()
