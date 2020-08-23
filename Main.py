@@ -213,7 +213,7 @@ class VideoDownloader(object):
 
         self.show_result()  # 展示视频信息
 
-        self.size_count(self.choose_vq.currentIndex(), 0, duration, self.num)
+        self.size_count(self.choose_vq.currentIndex(), 0, duration, self.num)  # 刷新下载文件大小
 
     def size_count(self, vq, aq, duration, num):
         size = (duration / 1000) * (self.video[num-1][vq][2] + self.audio[num-1][aq][2]) / 8000000
@@ -317,23 +317,40 @@ class VideoDownloader(object):
         self.list.setItemDelegateForRow(num-1, delegate)
         video_size = int((duration / 1000) * self.video[num-1][vq][2] / 8)
         video_res = self.sess.get_video(self.video[num-1][vq][1], video_size)
-        # filesize = requests.get(url=url2, headers=header2, stream=True).headers['Content-Length']
         filesize = video_res.headers['Content-Length']
-        filepath = "./temp/video.flv"
-        fileobj = open(filepath, 'wb')
+        fileobj = open("./temp/video.flv", 'wb')
+        self.download_filename = self.video_info[num-1][1]
 
-        # 创建下载线程
-        download_thread = DownloadThread(video_res, filesize, fileobj, buffer=10240)
+        # 创建视频下载线程
+        download_thread = DownloadThread(video_res, filesize, fileobj, 10240, 0)
         download_thread.download_proess_signal.connect(self.set_prosess)
         download_thread.start()
+
         audio_size = int((duration / 1000) * self.audio[num-1][aq][2] / 8)
-        # self.sess.download(self.video[num-1][vq][1], self.audio[num-1][aq][1], video_size, audio_size)
-        print("下载完成")
+        audio_res = self.sess.get_audio(self.audio[num-1][aq][1], audio_size)
+        filesize = audio_res.headers['Content-Length']
+        fileobj = open("./temp/audio.mp3", 'wb')
+
+        # 创建音频下载线程
+        download_thread = DownloadThread(video_res, filesize, fileobj, 10240, 1)
+        download_thread.download_proess_signal.connect(self.set_prosess)
+        download_thread.start()
+
+        self.merge_file()  # 合并音视频
+
+        self.set_prosess(100)  # 刷新进度
 
     def set_prosess(self, val):
-        delegate = ListDelegate(val)
+        delegate = ListDelegate(self.download_filename, val)
         self.list.setItemDelegateForRow(0, delegate)
 
+    def merge_file(self):
+        video_path = "./temp/video.flv"
+        audio_path = "./temp/audio.mp3"
+        os.system("ffmpeg -i " + video_path + " -i " + audio_path + " -codec copy ./downloads/final.mp4")
+        os.rename("./downloads/final.mp4", f"./downloads/{self.download_filename}.mp4")
+        os.remove("./temp/video.flv")
+        os.remove("./temp/audio.mp3")
 
 
 class ListDelegate(QtWidgets.QStyledItemDelegate):
@@ -353,7 +370,6 @@ class ListDelegate(QtWidgets.QStyledItemDelegate):
         font.setPixelSize(18)
         font.setFamily('黑体')
         painter.setFont(font)
-        # title = "【舞力全开2020】switch国行彩虹节拍超高清HD1080p视频文件需要请点赞评论留邮箱"
         painter.drawText(QtCore.QRect(210, 10, 725, 40), 0, self.name)
 
         # 绘制下载信息
@@ -386,12 +402,13 @@ class ListDelegate(QtWidgets.QStyledItemDelegate):
 class DownloadThread(QtCore.QThread):
     download_proess_signal = QtCore.pyqtSignal(int)  # 创建信号
 
-    def __init__(self, res, filesize, fileobj, buffer):
+    def __init__(self, res, filesize, fileobj, buffer, state):
         super(DownloadThread, self).__init__()
         self.filesize = filesize
         self.fileobj = fileobj
         self.buffer = buffer
         self.res = res
+        self.state = state
 
     def run(self):
         try:
@@ -403,12 +420,16 @@ class DownloadThread(QtCore.QThread):
                 self.fileobj.write(chunk)  # 写入文件
                 offset = offset + len(chunk)
                 # print(f'offset:{offset}')
-                proess = offset / int(self.filesize) * 93  # 93%为视频下载完成
+                if self.state == 0:
+                    proess = offset / int(self.filesize) * 90  # 90%为视频下载完成
+                elif self.state == 1:
+                    proess = offset / int(self.filesize) * 5 + 90  # 95%为视频下载完成
                 # print(f'proess:{proess}')
                 self.download_proess_signal.emit(int(proess))  # 发送信号
 
             self.fileobj.close()  # 关闭文件
             self.exit(0)  # 关闭线程
+            print("下载完成")
 
         except Exception as e:
             print(e)

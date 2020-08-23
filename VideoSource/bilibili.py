@@ -49,14 +49,6 @@ class bilibiliVideo(object):
         #     for data in res.iter_content(1024):
         #         f.write(data)
 
-    def merge_file(self):
-        video_path = "./temp/video.flv"
-        audio_path = "./temp/audio.mp3"
-        os.system("ffmpeg -i " + video_path + " -i " + audio_path + " -codec copy ./downloads/final.mp4")
-        os.rename("./downloads/final.mp4", f"./downloads/{self.filename}.mp4")
-        os.remove("./temp/video.flv")
-        os.remove("./temp/audio.mp3")
-
     def get_info(self, url):
         video_url = []
         audio_url = []
@@ -96,11 +88,6 @@ class bilibiliVideo(object):
         with open('./temp/pic.jpg', 'wb') as f:
             f.write(pic)
         return self.filename, self.duration, video_url, audio_url
-
-    # def download(self, v_url, a_url, v_size, a_size):
-    #     video_res = self.get_video(v_url, v_size)
-    #     audio_res = self.get_audio(a_url, a_size)
-    #     self.merge_file()
 
 
 if __name__ == '__main__':
