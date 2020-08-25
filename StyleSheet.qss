@@ -6,12 +6,8 @@
     background-color: blue;
 }
 
-#search_area {
+#top_bar {
     background-color: green;
-}
-
-#logo {
-    background-color: yellow;
 }
 
 QTabBar::tab:first {

@@ -8,7 +8,8 @@ from PIL import Image
 class VideoDownloader(object):
     """
     bug: 队列超过一个视频源时，画质选择会有冲突
-    下载队列超过一个视频会有缩略图显示问题
+         下载队列超过一个视频会有缩略图显示问题
+         有多线程问题
     """
 
     def __init__(self):
@@ -23,39 +24,39 @@ class VideoDownloader(object):
         self.main_window = QtWidgets.QMainWindow()
         self.main_window.setObjectName("main_window")
         self.main_window.resize(1200, 800)
-        # self.main_window.setWindowIcon()
-        self.main_window.setWindowTitle("Video Downloader - Designed by Jackie")
+        self.main_window.setWindowFlag(QtCore.Qt.FramelessWindowHint)
         self.central_widget = QtWidgets.QWidget(self.main_window)
         self.central_widget.setObjectName("central_widget")
 
         # 设置侧边栏
         self.left_widget = QtWidgets.QWidget(self.central_widget)
-        self.left_widget.setGeometry(QtCore.QRect(0, 0, 250, 800))
+        self.left_widget.setGeometry(QtCore.QRect(0, 60, 250, 800))
         self.left_widget.setObjectName("left_widget")
         self.v_box_1 = QtWidgets.QVBoxLayout(self.left_widget)
         self.btn1 = QtWidgets.QPushButton("搜索", self.left_widget)
+        self.btn1.clicked.connect(lambda: self.right_widget.setCurrentIndex(0))
         self.btn2 = QtWidgets.QPushButton("设置", self.left_widget)
-        self.logo = QtWidgets.QLabel(self.left_widget)
-        self.logo.setObjectName("logo")
+        self.btn2.clicked.connect(lambda: self.right_widget.setCurrentIndex(1))
         self.spacer1 = QtWidgets.QSpacerItem(250, 100, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Preferred)
         self.spacer2 = QtWidgets.QSpacerItem(250, 500, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Preferred)
-        self.v_box_1.addWidget(self.logo)
         self.v_box_1.addItem(self.spacer1)
         self.v_box_1.addWidget(self.btn1)
         self.v_box_1.addWidget(self.btn2)
         self.v_box_1.addItem(self.spacer2)
 
-        # 设置右侧区域
-        self.right_widget = QtWidgets.QStackedWidget(self.central_widget)
-        self.right_widget.setObjectName("right_widget")
-        self.right_widget.setGeometry(QtCore.QRect(250, 0, 1200, 800))
+        # 设置上边栏
+        self.top_bar = QtWidgets.QWidget(self.central_widget)
+        self.top_bar.setGeometry(0, 0, 1200, 60)
+        self.top_bar.setObjectName("top_bar")
 
-        # 下载页设置
-        self.download_page = QtWidgets.QWidget()
-        self.download_page.setObjectName("download_page")
-        self.download_page.setGeometry(QtCore.QRect(250, 0, 1200, 800))
-        self.search_area = QtWidgets.QWidget(self.download_page)
-        self.search_area.setGeometry(QtCore.QRect(0, 0, 950, 60))
+        # logo设置
+        self.logo = QtWidgets.QLabel(self.top_bar)
+        self.logo.setGeometry(0, 0, 250, 60)
+        self.logo.setPixmap(QtGui.QPixmap("./icons/logo.png"))
+
+        # 搜索区域设置
+        self.search_area = QtWidgets.QWidget(self.top_bar)
+        self.search_area.setGeometry(QtCore.QRect(250, 0, 700, 60))
         self.search_area.setObjectName("search_area")
         self.h_box_1 = QtWidgets.QHBoxLayout(self.search_area)
 
@@ -120,17 +121,27 @@ class VideoDownloader(object):
         self.engine.setFont(font)
         self.engine.setCursor(QtCore.Qt.PointingHandCursor)
         self.engine.currentIndexChanged.connect(self.engine_switch)  # 搜索引擎切换
-        
+
         self.h_box_1.setContentsMargins(10, 10, 10, 10)
         self.h_box_1.setSpacing(0)
         self.h_box_1.addWidget(self.engine)
         self.h_box_1.addWidget(self.search_box)
         self.h_box_1.addWidget(self.search_btn)
 
+        # 设置右侧区域
+        self.right_widget = QtWidgets.QStackedWidget(self.central_widget)
+        self.right_widget.setObjectName("right_widget")
+        self.right_widget.setGeometry(QtCore.QRect(250, 60, 1200, 800))
+
+        # 下载页设置
+        self.download_page = QtWidgets.QWidget()
+        self.download_page.setObjectName("download_page")
+        self.download_page.setGeometry(QtCore.QRect(250, 60, 1200, 800))
+
         # 基本信息设置
         self.info_box = QtWidgets.QTabWidget(self.download_page)
         self.info_box.setObjectName("info_box")
-        self.info_box.setGeometry(QtCore.QRect(0, 90, 950, 760))
+        self.info_box.setGeometry(QtCore.QRect(0, 0, 950, 740))
 
         # 队列
         self.sequence = QtWidgets.QWidget()
@@ -317,28 +328,24 @@ class VideoDownloader(object):
         self.list.setItemDelegateForRow(num-1, delegate)
         video_size = int((duration / 1000) * self.video[num-1][vq][2] / 8)
         video_res = self.sess.get_video(self.video[num-1][vq][1], video_size)
-        filesize = video_res.headers['Content-Length']
-        fileobj = open("./temp/video.flv", 'wb')
         self.download_filename = self.video_info[num-1][1]
 
         # 创建视频下载线程
-        download_thread = DownloadThread(video_res, filesize, fileobj, 10240, 0)
+        download_thread = DownloadThread(video_res, video_res.headers['Content-Length'], open("./temp/video.flv", 'wb'), 10240, 0)
         download_thread.download_proess_signal.connect(self.set_prosess)
         download_thread.start()
 
         audio_size = int((duration / 1000) * self.audio[num-1][aq][2] / 8)
         audio_res = self.sess.get_audio(self.audio[num-1][aq][1], audio_size)
-        filesize = audio_res.headers['Content-Length']
-        fileobj = open("./temp/audio.mp3", 'wb')
 
         # 创建音频下载线程
-        download_thread = DownloadThread(video_res, filesize, fileobj, 10240, 1)
+        download_thread = DownloadThread(audio_res, audio_res.headers['Content-Length'], open("./temp/audio.mp3", 'wb'), 10240, 1)
         download_thread.download_proess_signal.connect(self.set_prosess)
         download_thread.start()
 
-        self.merge_file()  # 合并音视频
-
-        self.set_prosess(100)  # 刷新进度
+        if download_thread.isFinished() == 1:  # 判断是否下载完成
+            self.merge_file()  # 合并音视频
+            self.set_prosess(100)  # 刷新进度
 
     def set_prosess(self, val):
         delegate = ListDelegate(self.download_filename, val)
