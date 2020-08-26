@@ -5,7 +5,7 @@ from VideoSource import bilibili
 from PIL import Image
 
 
-class VideoDownloader(object):
+class VideoDownloader(QtWidgets.QMainWindow):
     """
     bug: 队列超过一个视频源时，画质选择会有冲突
          下载队列超过一个视频会有缩略图显示问题
@@ -13,6 +13,7 @@ class VideoDownloader(object):
     """
 
     def __init__(self):
+        super(VideoDownloader, self).__init__()
         self.engine_list = ['b站', '...']
         self.sess = None
         self.video = []
@@ -21,16 +22,15 @@ class VideoDownloader(object):
         self.video_info = []
 
     def setup_ui(self):
-        self.main_window = QtWidgets.QMainWindow()
-        self.main_window.setObjectName("main_window")
-        self.main_window.resize(1200, 800)
-        self.main_window.setWindowFlag(QtCore.Qt.FramelessWindowHint)
-        self.central_widget = QtWidgets.QWidget(self.main_window)
+        self.setObjectName("main_window")
+        self.resize(1200, 800)
+        self.setWindowFlag(QtCore.Qt.FramelessWindowHint)
+        self.central_widget = QtWidgets.QWidget(self)
         self.central_widget.setObjectName("central_widget")
 
         # 设置侧边栏
         self.left_widget = QtWidgets.QWidget(self.central_widget)
-        self.left_widget.setGeometry(QtCore.QRect(0, 60, 250, 800))
+        self.left_widget.setGeometry(0, 60, 250, 800)
         self.left_widget.setObjectName("left_widget")
         self.v_box_1 = QtWidgets.QVBoxLayout(self.left_widget)
         self.btn1 = QtWidgets.QPushButton("搜索", self.left_widget)
@@ -54,9 +54,21 @@ class VideoDownloader(object):
         self.logo.setGeometry(0, 0, 250, 60)
         self.logo.setPixmap(QtGui.QPixmap("./icons/logo.png"))
 
+        # 窗口控制按钮设置
+        self.close_btn = QtWidgets.QPushButton(self.top_bar)
+        self.close_btn.setFixedSize(30, 30)
+        self.close_btn.setGeometry(1155, 15, 1200, 45)
+        self.close_btn.setObjectName("close_btn")
+        self.close_btn.clicked.connect(self.close)
+        self.minimize_btn = QtWidgets.QPushButton(self.top_bar)
+        self.minimize_btn.setGeometry(1110, 15, 1140, 45)
+        self.minimize_btn.setFixedSize(30, 30)
+        self.minimize_btn.setObjectName("minimize_btn")
+        self.minimize_btn.clicked.connect(self.showMinimized)
+
         # 搜索区域设置
         self.search_area = QtWidgets.QWidget(self.top_bar)
-        self.search_area.setGeometry(QtCore.QRect(250, 0, 700, 60))
+        self.search_area.setGeometry(250, 0, 700, 60)
         self.search_area.setObjectName("search_area")
         self.h_box_1 = QtWidgets.QHBoxLayout(self.search_area)
 
@@ -131,22 +143,22 @@ class VideoDownloader(object):
         # 设置右侧区域
         self.right_widget = QtWidgets.QStackedWidget(self.central_widget)
         self.right_widget.setObjectName("right_widget")
-        self.right_widget.setGeometry(QtCore.QRect(250, 60, 1200, 800))
+        self.right_widget.setGeometry(250, 60, 1200, 800)
 
         # 下载页设置
         self.download_page = QtWidgets.QWidget()
         self.download_page.setObjectName("download_page")
-        self.download_page.setGeometry(QtCore.QRect(250, 60, 1200, 800))
+        self.download_page.setGeometry(250, 60, 1200, 800)
 
         # 基本信息设置
         self.info_box = QtWidgets.QTabWidget(self.download_page)
         self.info_box.setObjectName("info_box")
-        self.info_box.setGeometry(QtCore.QRect(0, 0, 950, 740))
+        self.info_box.setGeometry(0, 0, 950, 740)
 
         # 队列
         self.sequence = QtWidgets.QWidget()
         self.table = QtWidgets.QTableWidget(self.sequence)
-        self.table.setGeometry(QtCore.QRect(0, 0, 950, 700))
+        self.table.setGeometry(0, 0, 950, 700)
         font = QtGui.QFont()
         font.setFamily("微软雅黑")
         font.setPointSize(10)
@@ -169,7 +181,7 @@ class VideoDownloader(object):
         # 正在下载
         self.downloading = QtWidgets.QWidget()
         self.list = QtWidgets.QListWidget(self.downloading)
-        self.list.setGeometry(QtCore.QRect(0, 0, 950, 700))
+        self.list.setGeometry(0, 0, 950, 700)
         self.list.setMouseTracking(True)
         self.list.setFrameStyle(0)
 
@@ -179,14 +191,14 @@ class VideoDownloader(object):
         # 设置设置页
         self.option_page = QtWidgets.QWidget()
         self.option_page.setObjectName("option_page")
-        self.option_page.setGeometry(QtCore.QRect(250, 0, 1200, 800))
+        self.option_page.setGeometry(250, 0, 1200, 800)
 
         self.right_widget.addWidget(self.download_page)
         self.right_widget.addWidget(self.option_page)
         self.right_widget.setCurrentIndex(0)
 
-        self.main_window.setCentralWidget(self.central_widget)
-        self.main_window.show()
+        self.setCentralWidget(self.central_widget)
+        self.show()
 
     def engine_switch(self):
         print(f'当前搜索引擎：{self.engine.currentIndex()}')
@@ -358,6 +370,20 @@ class VideoDownloader(object):
         os.rename("./downloads/final.mp4", f"./downloads/{self.download_filename}.mp4")
         os.remove("./temp/video.flv")
         os.remove("./temp/audio.mp3")
+
+    def mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            self.m_flag = True
+            self.m_Position = event.globalPos() - self.pos()  # 获取鼠标相对窗口的位置
+            event.accept()
+
+    def mouseMoveEvent(self, event):
+        if QtCore.Qt.LeftButton and self.m_flag:
+            self.move(event.globalPos() - self.m_Position)  # 更改窗口位置
+            event.accept()
+
+    def mouseReleaseEvent(self, event):
+        self.m_flag = False
 
 
 class ListDelegate(QtWidgets.QStyledItemDelegate):

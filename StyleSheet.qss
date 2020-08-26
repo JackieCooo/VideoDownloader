@@ -10,6 +10,30 @@
     background-color: green;
 }
 
+#close_btn {
+    border-image: url(./icons/close_btn_normal.png)
+}
+
+#close_btn:hover {
+    border-image: url(./icons/close_btn_hover.png)
+}
+
+#close_btn:pressed {
+    border-image: url(./icons/close_btn_pressed.png)
+}
+
+#minimize_btn {
+    border-image: url(./icons/minimize_btn_normal.png)
+}
+
+#minimize_btn:hover {
+    border-image: url(./icons/minimize_btn_hover.png)
+}
+
+#minimize_btn:pressed {
+    border-image: url(./icons/minimize_btn_pressed.png)
+}
+
 QTabBar::tab:first {
     margin-left: 350px;
 }
