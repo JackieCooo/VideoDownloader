@@ -45,3 +45,15 @@ QTabBar::tab:middle {
 QTabBar::tab:last {
     margin-left: 10px;
 }
+
+QWidget QPushButton:hover {
+    border-image: url(./icons/left_btn_hover.png)
+}
+
+QWidget QPushButton {
+    border-image: url(./icons/left_btn_normal.png)
+}
+
+#search_btn:hover {
+    border-image: url(./icons/minimize_btn_hover.png)
+}

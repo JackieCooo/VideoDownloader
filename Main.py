@@ -32,17 +32,16 @@ class VideoDownloader(QtWidgets.QMainWindow):
         self.left_widget = QtWidgets.QWidget(self.central_widget)
         self.left_widget.setGeometry(0, 60, 250, 800)
         self.left_widget.setObjectName("left_widget")
-        self.v_box_1 = QtWidgets.QVBoxLayout(self.left_widget)
-        self.btn1 = QtWidgets.QPushButton("搜索", self.left_widget)
+        # self.btn1 = QtWidgets.QPushButton("搜索", self.left_widget)
+        self.btn1 = CustomBtn(self.left_widget)
+        self.btn1.setGeometry(10, 20, 230, 50)
+        self.setObjectName("left_btn1")
         self.btn1.clicked.connect(lambda: self.right_widget.setCurrentIndex(0))
-        self.btn2 = QtWidgets.QPushButton("设置", self.left_widget)
+        # self.btn2 = QtWidgets.QPushButton("设置", self.left_widget)
+        self.btn2 = CustomBtn(self.left_widget)
+        self.btn2.setGeometry(10, 90, 230, 50)
+        self.btn2.setObjectName("left_btn2")
         self.btn2.clicked.connect(lambda: self.right_widget.setCurrentIndex(1))
-        self.spacer1 = QtWidgets.QSpacerItem(250, 100, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Preferred)
-        self.spacer2 = QtWidgets.QSpacerItem(250, 500, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Preferred)
-        self.v_box_1.addItem(self.spacer1)
-        self.v_box_1.addWidget(self.btn1)
-        self.v_box_1.addWidget(self.btn2)
-        self.v_box_1.addItem(self.spacer2)
 
         # 设置上边栏
         self.top_bar = QtWidgets.QWidget(self.central_widget)
@@ -467,6 +466,35 @@ class DownloadThread(QtCore.QThread):
         except Exception as e:
             print(e)
 
+
+class CustomBtn(QtWidgets.QAbstractButton):
+    def __init__(self, parent):
+        super(CustomBtn, self).__init__(parent)
+        self.hover_flag = 0
+
+    def paintEvent(self, event):
+        painter = QtGui.QPainter(self)
+        if self.hover_flag:
+            pen = QtGui.QPen(QtGui.QColor(0, 0, 0, 0))
+            painter.setPen(pen)
+            brush = QtGui.QBrush(QtGui.QColor(200, 200, 200))
+            painter.setBrush(brush)
+            painter.drawRoundedRect(0, 0, 230, 40, 7.0, 7.0)
+        if not self.hover_flag:
+            pen = QtGui.QPen(QtGui.QColor(0, 0, 0, 0))
+            painter.setPen(pen)
+            brush = QtGui.QBrush(QtGui.QColor(0, 0, 0, 0))
+            painter.setBrush(brush)
+            painter.drawRoundedRect(0, 0, 230, 40, 7.0, 7.0)
+        pen = QtGui.QPen(QtGui.QColor(255, 0, 0))
+        painter.setPen(pen)
+        painter.drawText(0, 0, 230, 40, 0, "test")
+
+    def enterEvent(self, event):
+        self.hover_flag = 1
+
+    def leaveEvent(self, event):
+        self.hover_flag =0
 
 
 if __name__ == "__main__":
