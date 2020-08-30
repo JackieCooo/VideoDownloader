@@ -2,58 +2,53 @@
     background-color: red;
 }
 
-#download_page {
-    background-color: blue;
-}
-
 #top_bar {
     background-color: green;
 }
 
 #close_btn {
-    border-image: url(./icons/close_btn_normal.png)
+    border-image: url(./icons/close_btn_normal.png);
 }
 
 #close_btn:hover {
-    border-image: url(./icons/close_btn_hover.png)
+    border-image: url(./icons/close_btn_hover.png);
 }
 
 #close_btn:pressed {
-    border-image: url(./icons/close_btn_pressed.png)
+    border-image: url(./icons/close_btn_pressed.png);
 }
 
 #minimize_btn {
-    border-image: url(./icons/minimize_btn_normal.png)
+    border-image: url(./icons/minimize_btn_normal.png);
 }
 
 #minimize_btn:hover {
-    border-image: url(./icons/minimize_btn_hover.png)
+    border-image: url(./icons/minimize_btn_hover.png);
 }
 
 #minimize_btn:pressed {
-    border-image: url(./icons/minimize_btn_pressed.png)
+    border-image: url(./icons/minimize_btn_pressed.png);
 }
 
 QTabBar::tab:first {
     margin-left: 350px;
 }
 
-QTabBar::tab:middle {
-    margin-left: 10px;
-}
-
 QTabBar::tab:last {
-    margin-left: 10px;
+    margin-left: 20px;
 }
 
-QWidget QPushButton:hover {
-    border-image: url(./icons/left_btn_hover.png)
+QTabBar::tab {
+    border-image: url(./icons/tab_normal.png);
+    width: 100px;
+    height: 40px;
 }
 
-QWidget QPushButton {
-    border-image: url(./icons/left_btn_normal.png)
+QTabBar::tab:selected {
+    border-image: url(./icons/tab_selected.png);
+    color: rgb(39, 69, 133);
 }
 
-#search_btn:hover {
-    border-image: url(./icons/minimize_btn_hover.png)
+QMainWindow {
+    background-color: white;
 }

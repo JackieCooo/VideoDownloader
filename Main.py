@@ -32,15 +32,14 @@ class VideoDownloader(QtWidgets.QMainWindow):
         self.left_widget = QtWidgets.QWidget(self.central_widget)
         self.left_widget.setGeometry(0, 60, 250, 800)
         self.left_widget.setObjectName("left_widget")
-        # self.btn1 = QtWidgets.QPushButton("搜索", self.left_widget)
         self.btn1 = CustomBtn(self.left_widget)
+        self.btn1.setText("搜索")
         self.btn1.setGeometry(10, 20, 230, 50)
-        self.setObjectName("left_btn1")
+        self.btn1.setChecked(True)
         self.btn1.clicked.connect(lambda: self.right_widget.setCurrentIndex(0))
-        # self.btn2 = QtWidgets.QPushButton("设置", self.left_widget)
         self.btn2 = CustomBtn(self.left_widget)
-        self.btn2.setGeometry(10, 90, 230, 50)
-        self.btn2.setObjectName("left_btn2")
+        self.btn2.setText("设置")
+        self.btn2.setGeometry(10, 80, 230, 50)
         self.btn2.clicked.connect(lambda: self.right_widget.setCurrentIndex(1))
 
         # 设置上边栏
@@ -153,6 +152,7 @@ class VideoDownloader(QtWidgets.QMainWindow):
         self.info_box = QtWidgets.QTabWidget(self.download_page)
         self.info_box.setObjectName("info_box")
         self.info_box.setGeometry(0, 0, 950, 740)
+        # self.info_box.setF
 
         # 队列
         self.sequence = QtWidgets.QWidget()
@@ -470,25 +470,30 @@ class DownloadThread(QtCore.QThread):
 class CustomBtn(QtWidgets.QAbstractButton):
     def __init__(self, parent):
         super(CustomBtn, self).__init__(parent)
+        self.setAutoExclusive(True)
+        self.setCheckable(True)
+        self.setCursor(QtCore.Qt.PointingHandCursor)
         self.hover_flag = 0
 
     def paintEvent(self, event):
         painter = QtGui.QPainter(self)
-        if self.hover_flag:
+        if self.hover_flag and not self.isChecked():
             pen = QtGui.QPen(QtGui.QColor(0, 0, 0, 0))
             painter.setPen(pen)
-            brush = QtGui.QBrush(QtGui.QColor(200, 200, 200))
+            brush = QtGui.QBrush(QtGui.QColor(200, 200, 200, 205))
             painter.setBrush(brush)
             painter.drawRoundedRect(0, 0, 230, 40, 7.0, 7.0)
-        if not self.hover_flag:
+        if self.isChecked():
             pen = QtGui.QPen(QtGui.QColor(0, 0, 0, 0))
             painter.setPen(pen)
-            brush = QtGui.QBrush(QtGui.QColor(0, 0, 0, 0))
+            brush = QtGui.QBrush(QtGui.QColor(100, 100, 100, 205))
             painter.setBrush(brush)
             painter.drawRoundedRect(0, 0, 230, 40, 7.0, 7.0)
-        pen = QtGui.QPen(QtGui.QColor(255, 0, 0))
+        pen = QtGui.QPen(QtGui.QColor(0, 0, 0))
         painter.setPen(pen)
-        painter.drawText(0, 0, 230, 40, 0, "test")
+        font = QtGui.QFont("微软雅黑", 12)
+        painter.setFont(font)
+        painter.drawText(0, 0, 230, 40, QtCore.Qt.AlignCenter, self.text())
 
     def enterEvent(self, event):
         self.hover_flag = 1
