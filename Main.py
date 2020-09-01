@@ -3,6 +3,8 @@ import os
 from PyQt5 import QtWidgets, QtGui, QtCore
 from VideoSource import bilibili
 from PIL import Image
+import ctypes
+ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("myappid")
 
 
 class VideoDownloader(QtWidgets.QMainWindow):
@@ -25,12 +27,13 @@ class VideoDownloader(QtWidgets.QMainWindow):
         self.setObjectName("main_window")
         self.resize(1200, 800)
         self.setWindowFlag(QtCore.Qt.FramelessWindowHint)
+        self.setWindowIcon(QtGui.QIcon("./icons/window_icon.png"))
         self.central_widget = QtWidgets.QWidget(self)
         self.central_widget.setObjectName("central_widget")
 
         # 设置侧边栏
         self.left_widget = QtWidgets.QWidget(self.central_widget)
-        self.left_widget.setGeometry(0, 60, 250, 800)
+        self.left_widget.setGeometry(0, 60, 250, 740)
         self.left_widget.setObjectName("left_widget")
         self.btn1 = CustomBtn(self.left_widget)
         self.btn1.setText("搜索")
@@ -41,6 +44,11 @@ class VideoDownloader(QtWidgets.QMainWindow):
         self.btn2.setText("设置")
         self.btn2.setGeometry(10, 80, 230, 50)
         self.btn2.clicked.connect(lambda: self.right_widget.setCurrentIndex(1))
+        self.about = QtWidgets.QLabel(self.left_widget)
+        self.about.setGeometry(0, 640, 250, 100)
+        self.about.setFont(QtGui.QFont("微软雅黑", 9))
+        self.about.setAlignment(QtCore.Qt.AlignCenter)
+        self.about.setText("ver 1.0\nDesigned by Jackie")
 
         # 设置上边栏
         self.top_bar = QtWidgets.QWidget(self.central_widget)
@@ -57,11 +65,13 @@ class VideoDownloader(QtWidgets.QMainWindow):
         self.close_btn.setFixedSize(30, 30)
         self.close_btn.setGeometry(1155, 15, 1200, 45)
         self.close_btn.setObjectName("close_btn")
+        self.close_btn.setCursor(QtCore.Qt.PointingHandCursor)
         self.close_btn.clicked.connect(self.close)
         self.minimize_btn = QtWidgets.QPushButton(self.top_bar)
         self.minimize_btn.setGeometry(1110, 15, 1140, 45)
         self.minimize_btn.setFixedSize(30, 30)
         self.minimize_btn.setObjectName("minimize_btn")
+        self.minimize_btn.setCursor(QtCore.Qt.PointingHandCursor)
         self.minimize_btn.clicked.connect(self.showMinimized)
 
         # 搜索区域设置
@@ -75,7 +85,7 @@ class VideoDownloader(QtWidgets.QMainWindow):
         sp = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
         sp.setHorizontalStretch(6)
         self.search_box.setSizePolicy(sp)
-        self.search_box.setFixedHeight(40)
+        self.search_box.setFixedHeight(36)
         self.search_box.setObjectName("search_box")
         font = QtGui.QFont()
         font.setFamily("微软雅黑")
@@ -85,37 +95,29 @@ class VideoDownloader(QtWidgets.QMainWindow):
         self.search_box.placeholderText()
         self.search_box.setPlaceholderText("输入视频地址")
         self.search_box.setCursor(QtCore.Qt.IBeamCursor)
+        self.search_box.setFrame(False)
+        # print(self.search_box.sizeHint().width())
 
         # 按钮设置
-        self.search_btn = QtWidgets.QPushButton("添加", self.search_area)
+        self.search_btn = QtWidgets.QPushButton(self.search_area)
         sp = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
         sp.setHorizontalStretch(1)
         self.search_btn.setSizePolicy(sp)
-        self.search_btn.setFixedHeight(40)
-        font = QtGui.QFont()
-        font.setFamily("微软雅黑")
-        font.setPointSize(12)
-        self.search_btn.setFont(font)
+        self.search_btn.setFixedHeight(36)
         self.search_btn.setObjectName("search_btn")
         self.search_btn.setCursor(QtCore.Qt.PointingHandCursor)
         self.search_btn.clicked.connect(lambda: self.search(self.search_box.text()))  # 按钮触发信号
+        # print(self.search_btn.geometry().width())
 
         # 引擎切换设置
         self.engine = QtWidgets.QComboBox(self.search_area)
         self.engine.setSizePolicy(sp)
-        self.engine.setFixedHeight(40)
+        self.engine.setFixedHeight(36)
         self.engine.setObjectName("engine")
         self.engine.setFrame(True)
         combobox_text = QtWidgets.QLineEdit()  # 设置combobox字体
         combobox_text.setReadOnly(True)
         combobox_text.setAlignment(QtCore.Qt.AlignCenter)
-        palette = QtGui.QPalette()
-        brush = QtGui.QBrush(QtGui.QColor(0, 0, 0))
-        brush.setStyle(QtCore.Qt.SolidPattern)
-        palette.setBrush(QtGui.QPalette.Active, QtGui.QPalette.Text, brush)
-        palette.setBrush(QtGui.QPalette.Inactive, QtGui.QPalette.Text, brush)
-        palette.setBrush(QtGui.QPalette.Disabled, QtGui.QPalette.Text, brush)
-        self.engine.setPalette(palette)
         self.engine.setLineEdit(combobox_text)
         combobox_drop_down = QtWidgets.QListWidget()  # 设置combobox下拉菜单字体
         for i in self.engine_list:
@@ -156,7 +158,7 @@ class VideoDownloader(QtWidgets.QMainWindow):
 
         # 队列
         self.sequence = QtWidgets.QWidget()
-        self.table = QtWidgets.QTableWidget(self.sequence)
+        self.table = CustomTable(self.sequence)
         self.table.setGeometry(0, 0, 950, 700)
         font = QtGui.QFont()
         font.setFamily("微软雅黑")
@@ -174,7 +176,9 @@ class VideoDownloader(QtWidgets.QMainWindow):
         self.table.horizontalHeader().resizeSection(2, 100)
         self.table.horizontalHeader().resizeSection(3, 100)
         self.table.horizontalHeader().resizeSection(4, 100)
+        self.table.horizontalHeader().setSectionsClickable(False)
         self.table.setFrameShape(QtWidgets.QFrame.NoFrame)
+        self.table.viewport().setFocusPolicy(QtCore.Qt.NoFocus)
         self.table.setObjectName("table")
 
         # 正在下载
@@ -370,19 +374,19 @@ class VideoDownloader(QtWidgets.QMainWindow):
         os.remove("./temp/video.flv")
         os.remove("./temp/audio.mp3")
 
-    def mousePressEvent(self, event):
-        if event.button() == QtCore.Qt.LeftButton:
-            self.m_flag = True
-            self.m_Position = event.globalPos() - self.pos()  # 获取鼠标相对窗口的位置
-            event.accept()
-
-    def mouseMoveEvent(self, event):
-        if QtCore.Qt.LeftButton and self.m_flag:
-            self.move(event.globalPos() - self.m_Position)  # 更改窗口位置
-            event.accept()
-
-    def mouseReleaseEvent(self, event):
-        self.m_flag = False
+    # def mousePressEvent(self, event):
+    #     if event.button() == QtCore.Qt.LeftButton:
+    #         self.m_flag = True
+    #         self.m_Position = event.globalPos() - self.pos()  # 获取鼠标相对窗口的位置
+    #         event.accept()
+    #
+    # def mouseMoveEvent(self, event):
+    #     if QtCore.Qt.LeftButton and self.m_flag:
+    #         self.move(event.globalPos() - self.m_Position)  # 更改窗口位置
+    #         event.accept()
+    #
+    # def mouseReleaseEvent(self, event):
+    #     self.m_flag = False
 
 
 class ListDelegate(QtWidgets.QStyledItemDelegate):
@@ -480,16 +484,16 @@ class CustomBtn(QtWidgets.QAbstractButton):
         if self.hover_flag and not self.isChecked():
             pen = QtGui.QPen(QtGui.QColor(0, 0, 0, 0))
             painter.setPen(pen)
-            brush = QtGui.QBrush(QtGui.QColor(200, 200, 200, 205))
+            brush = QtGui.QBrush(QtGui.QColor(144, 198, 244, 205))
             painter.setBrush(brush)
             painter.drawRoundedRect(0, 0, 230, 40, 7.0, 7.0)
         if self.isChecked():
             pen = QtGui.QPen(QtGui.QColor(0, 0, 0, 0))
             painter.setPen(pen)
-            brush = QtGui.QBrush(QtGui.QColor(100, 100, 100, 205))
+            brush = QtGui.QBrush(QtGui.QColor(39, 69, 133, 205))
             painter.setBrush(brush)
             painter.drawRoundedRect(0, 0, 230, 40, 7.0, 7.0)
-        pen = QtGui.QPen(QtGui.QColor(0, 0, 0))
+        pen = QtGui.QPen(QtGui.QColor(255, 255, 255))
         painter.setPen(pen)
         font = QtGui.QFont("微软雅黑", 12)
         painter.setFont(font)
@@ -500,6 +504,35 @@ class CustomBtn(QtWidgets.QAbstractButton):
 
     def leaveEvent(self, event):
         self.hover_flag =0
+
+
+class CustomTable(QtWidgets.QTableWidget):
+
+    def __init__(self, parent):
+        super(CustomTable, self).__init__(parent)
+        self.cellEntered.connect(self.cell_enter)
+        self.pre_row = -1
+
+    def leaveEvent(self, event):
+        item = self.item(self.pre_row, 0)
+        if item != 0:
+            self.set_row_color(self.pre_row, QtGui.QColor(0, 0, 0, 0))
+
+    def cell_enter(self, row, col):
+        if self.pre_row != -1:
+            item = self.item(self.pre_row, 0)
+            if item != 0:
+                self.set_row_color(self.pre_row, QtGui.QColor(0, 0, 0, 0))
+        item = self.item(row, col)
+        if item != 0 and not item.isSelected():
+            self.set_row_color(row, QtGui.QColor(255, 0, 0, 50))
+        self.pre_row = row
+
+    def set_row_color(self, row, color):
+        for i in range(self.columnCount()):
+            item = self.item(row, i)
+            item.setBackground(color)
+
 
 
 if __name__ == "__main__":

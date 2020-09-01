@@ -1,9 +1,9 @@
 #left_widget {
-    background-color: red;
+    background-color: rgb(67, 125, 198);
 }
 
 #top_bar {
-    background-color: green;
+    background-color: rgb(144, 198, 244);
 }
 
 #close_btn {
@@ -51,4 +51,28 @@ QTabBar::tab:selected {
 
 QMainWindow {
     background-color: white;
+}
+
+QLabel {
+    color: white;
+}
+
+#search_box {
+    background-color: rgba(255, 255, 255, 205);
+}
+
+#search_btn {
+    border-image: url(./icons/search_btn_normal.png);
+}
+
+#engine {
+    border-image: url(./icons/engine.png);
+}
+
+#engine::drop-down {
+    border-image: url(./icons/engine_down_arrow_normal.png);
+    width: 20px;
+    height: 20px;
+    margin-top: 10px;
+    margin-right: 5px;
 }
