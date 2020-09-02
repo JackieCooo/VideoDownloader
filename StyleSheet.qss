@@ -65,12 +65,24 @@ QLabel {
     border-image: url(./icons/search_btn_normal.png);
 }
 
+#search_btn:pressed {
+    border-image: url(./icons/search_btn_pressed.png);
+}
+
 #engine {
     border-image: url(./icons/engine.png);
 }
 
 #engine::drop-down {
     border-image: url(./icons/engine_down_arrow_normal.png);
+    width: 20px;
+    height: 20px;
+    margin-top: 10px;
+    margin-right: 5px;
+}
+
+#engine::drop-down:pressed {
+    border-image: url(./icons/engine_down_arrow_pressed.png);
     width: 20px;
     height: 20px;
     margin-top: 10px;

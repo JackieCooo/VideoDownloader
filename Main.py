@@ -22,6 +22,7 @@ class VideoDownloader(QtWidgets.QMainWindow):
         self.audio = []
         self.num = 0  # 记录表格行数，便于动态调整
         self.video_info = []
+        self.m_flag = False
 
     def setup_ui(self):
         self.setObjectName("main_window")
@@ -374,19 +375,19 @@ class VideoDownloader(QtWidgets.QMainWindow):
         os.remove("./temp/video.flv")
         os.remove("./temp/audio.mp3")
 
-    # def mousePressEvent(self, event):
-    #     if event.button() == QtCore.Qt.LeftButton:
-    #         self.m_flag = True
-    #         self.m_Position = event.globalPos() - self.pos()  # 获取鼠标相对窗口的位置
-    #         event.accept()
-    #
-    # def mouseMoveEvent(self, event):
-    #     if QtCore.Qt.LeftButton and self.m_flag:
-    #         self.move(event.globalPos() - self.m_Position)  # 更改窗口位置
-    #         event.accept()
-    #
-    # def mouseReleaseEvent(self, event):
-    #     self.m_flag = False
+    def mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            self.m_flag = True
+            self.m_Position = event.globalPos() - self.pos()  # 获取鼠标相对窗口的位置
+            event.accept()
+
+    def mouseMoveEvent(self, event):
+        if QtCore.Qt.LeftButton and self.m_flag:
+            self.move(event.globalPos() - self.m_Position)  # 更改窗口位置
+            event.accept()
+
+    def mouseReleaseEvent(self, event):
+        self.m_flag = False
 
 
 class ListDelegate(QtWidgets.QStyledItemDelegate):
@@ -515,16 +516,16 @@ class CustomTable(QtWidgets.QTableWidget):
 
     def leaveEvent(self, event):
         item = self.item(self.pre_row, 0)
-        if item != 0:
+        if item is not None:
             self.set_row_color(self.pre_row, QtGui.QColor(0, 0, 0, 0))
 
     def cell_enter(self, row, col):
         if self.pre_row != -1:
             item = self.item(self.pre_row, 0)
-            if item != 0:
+            if item is not None:
                 self.set_row_color(self.pre_row, QtGui.QColor(0, 0, 0, 0))
         item = self.item(row, col)
-        if item != 0 and not item.isSelected():
+        if item is not None and not item.isSelected():
             self.set_row_color(row, QtGui.QColor(255, 0, 0, 50))
         self.pre_row = row
 
@@ -532,7 +533,6 @@ class CustomTable(QtWidgets.QTableWidget):
         for i in range(self.columnCount()):
             item = self.item(row, i)
             item.setBackground(color)
-
 
 
 if __name__ == "__main__":
