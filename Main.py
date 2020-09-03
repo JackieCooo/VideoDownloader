@@ -196,6 +196,24 @@ class VideoDownloader(QtWidgets.QMainWindow):
         self.option_page = QtWidgets.QWidget()
         self.option_page.setObjectName("option_page")
         self.option_page.setGeometry(250, 0, 1200, 800)
+        self.scroll_area = QtWidgets.QScrollArea(self.option_page)
+        self.scroll_area.setGeometry(0, 0, 950, 800)
+        self.scroll_area.setFrameShape(QtWidgets.QFrame.NoFrame)
+        self.w1 = QtWidgets.QWidget()
+        self.w1.resize(950, 1600)
+        self.v_box_1 = QtWidgets.QVBoxLayout(self.w1)
+        self.label1 = CustomLabel(self.w1)
+        self.label1.setText("基本设置")
+        self.label2 = CustomLabel(self.w1)
+        self.label2.setText("下载设置")
+        self.label3 = CustomLabel(self.w1)
+        self.label3.setText("关于")
+        self.v_box_1.addWidget(self.label1)
+        self.v_box_1.addWidget(self.label2)
+        self.v_box_1.addWidget(self.label3)
+        self.v_box_1.setSpacing(0)
+        self.v_box_1.setContentsMargins(10, 10, 10, 10)
+        self.scroll_area.setWidget(self.w1)
 
         self.right_widget.addWidget(self.download_page)
         self.right_widget.addWidget(self.option_page)
@@ -533,6 +551,21 @@ class CustomTable(QtWidgets.QTableWidget):
         for i in range(self.columnCount()):
             item = self.item(row, i)
             item.setBackground(color)
+
+
+class CustomLabel(QtWidgets.QLabel):
+
+    def __init__(self, parent):
+        super(CustomLabel, self).__init__(parent)
+
+    def paintEvent(self, event):
+        painter = QtGui.QPainter(self)
+        painter.setPen(QtGui.QColor(0, 0, 0, 0))
+        painter.setBrush(QtGui.QColor(67, 125, 198))
+        painter.drawRect(0, 0, 10, 30)
+        painter.setPen(QtGui.QColor(0, 0, 0))
+        painter.setFont(QtGui.QFont("微软雅黑", 12))
+        painter.drawText(20, 0, 180, 30, QtCore.Qt.AlignVCenter, self.text())
 
 
 if __name__ == "__main__":
