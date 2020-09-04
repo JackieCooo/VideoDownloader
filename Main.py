@@ -50,6 +50,7 @@ class VideoDownloader(QtWidgets.QMainWindow):
         self.about.setFont(QtGui.QFont("微软雅黑", 9))
         self.about.setAlignment(QtCore.Qt.AlignCenter)
         self.about.setText("ver 1.0\nDesigned by Jackie")
+        self.about.setObjectName("about")
 
         # 设置上边栏
         self.top_bar = QtWidgets.QWidget(self.central_widget)
@@ -204,11 +205,28 @@ class VideoDownloader(QtWidgets.QMainWindow):
         self.v_box_1 = QtWidgets.QVBoxLayout(self.w1)
         self.label1 = CustomLabel(self.w1)
         self.label1.setText("基本设置")
+        self.label4 = QtWidgets.QLabel(self.w1)
+        self.label4.setFont(QtGui.QFont("微软雅黑", 9))
+        self.label4.setText("主题颜色")
+        self.w2 = QtWidgets.QWidget(self.w1)
+        self.w2.setGeometry(0, 0, 900, 100)
+        self.w2.setObjectName("w2")
+        self.grid_box_1 = QtWidgets.QGridLayout(self.w2)
+        self.blue_btn = ColorChangingBtn(self.w2, QtGui.QColor(0, 0, 255))
+        self.blue_btn.setText("blue")
+        self.red_btn = ColorChangingBtn(self.w2, QtGui.QColor(255, 0, 0))
+        self.red_btn.setText("red")
+        self.grid_box_1.addWidget(self.blue_btn, 0, 0, 1, 1)
+        self.grid_box_1.addWidget(self.red_btn, 0, 1, 1, 1)
+
         self.label2 = CustomLabel(self.w1)
         self.label2.setText("下载设置")
         self.label3 = CustomLabel(self.w1)
         self.label3.setText("关于")
+
         self.v_box_1.addWidget(self.label1)
+        self.v_box_1.addWidget(self.label4)
+        self.v_box_1.addWidget(self.w2)
         self.v_box_1.addWidget(self.label2)
         self.v_box_1.addWidget(self.label3)
         self.v_box_1.setSpacing(0)
@@ -505,12 +523,14 @@ class CustomBtn(QtWidgets.QAbstractButton):
             painter.setPen(pen)
             brush = QtGui.QBrush(QtGui.QColor(144, 198, 244, 205))
             painter.setBrush(brush)
+            painter.setRenderHint(QtGui.QPainter.Antialiasing)
             painter.drawRoundedRect(0, 0, 230, 40, 7.0, 7.0)
         if self.isChecked():
             pen = QtGui.QPen(QtGui.QColor(0, 0, 0, 0))
             painter.setPen(pen)
             brush = QtGui.QBrush(QtGui.QColor(39, 69, 133, 205))
             painter.setBrush(brush)
+            painter.setRenderHint(QtGui.QPainter.Antialiasing)
             painter.drawRoundedRect(0, 0, 230, 40, 7.0, 7.0)
         pen = QtGui.QPen(QtGui.QColor(255, 255, 255))
         painter.setPen(pen)
@@ -566,6 +586,33 @@ class CustomLabel(QtWidgets.QLabel):
         painter.setPen(QtGui.QColor(0, 0, 0))
         painter.setFont(QtGui.QFont("微软雅黑", 12))
         painter.drawText(20, 0, 180, 30, QtCore.Qt.AlignVCenter, self.text())
+
+
+class ColorChangingBtn(QtWidgets.QAbstractButton):
+
+    def __init__(self, parent, color):
+        super(ColorChangingBtn, self).__init__(parent)
+        self.setCheckable(True)
+        self.setAutoExclusive(True)
+        self.setCursor(QtCore.Qt.PointingHandCursor)
+        self.resize(60, 80)
+        self.color = color
+
+    def paintEvent(self, event):
+        painter = QtGui.QPainter(self)
+        painter.setPen(QtGui.QColor(0, 0, 0, 0))
+        painter.setBrush(self.color)
+        painter.setRenderHint(QtGui.QPainter.Antialiasing)
+        painter.drawRoundedRect(5, 5, 50, 50, 7.0, 7.0)
+        painter.setPen(QtGui.QColor(0, 0, 0))
+        painter.drawText(0, 60, 58, 20, QtCore.Qt.AlignCenter, self.text())
+        if self.isChecked():
+            pen = QtGui.QPen(self.color)
+            pen.setWidth(3)
+            painter.setPen(pen)
+            painter.setBrush(QtGui.QColor(0, 0, 0, 0))
+            painter.setRenderHint(QtGui.QPainter.Antialiasing)
+            painter.drawRoundedRect(1, 1, 58, 58, 7.0, 7.0)
 
 
 if __name__ == "__main__":

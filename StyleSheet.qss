@@ -88,3 +88,15 @@ QLabel {
     margin-top: 10px;
     margin-right: 5px;
 }
+
+QWidget QLabel {
+    color: black;
+}
+
+#about {
+    color: white;
+}
+
+#w2 {
+    background-color: red;
+}
