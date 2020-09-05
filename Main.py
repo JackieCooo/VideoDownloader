@@ -770,4 +770,5 @@ if __name__ == "__main__":
     with open('StyleSheet.qss', 'r') as f:
         style = f.read()
     app.setStyleSheet(style)
+    # app.setStyle()
     sys.exit(app.exec_())
