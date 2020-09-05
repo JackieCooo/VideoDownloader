@@ -96,7 +96,3 @@ QWidget QLabel {
 #about {
     color: white;
 }
-
-#w2 {
-    background-color: red;
-}
