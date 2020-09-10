@@ -23,6 +23,9 @@ class VideoDownloader(QtWidgets.QMainWindow):
         self.num = 0  # 记录表格行数，便于动态调整
         self.video_info = []
         self.m_flag = False
+        if not os.path.exists("downloads"):
+            os.mkdir("downloads")
+        self.filepath = os.path.abspath(__file__)[:-7] + "downloads"
 
     def setup_ui(self):
         self.setObjectName("main_window")
@@ -205,6 +208,7 @@ class VideoDownloader(QtWidgets.QMainWindow):
         # self.scroll_area.setVerticalScrollBar()
         self.w1 = QtWidgets.QWidget()
         self.w1.resize(950, 1600)
+        self.w1.setObjectName("w1")
         self.v_box_1 = QtWidgets.QVBoxLayout(self.w1)
         self.label1 = CustomLabel(self.w1)
         self.label1.setText("基本设置")
@@ -256,8 +260,28 @@ class VideoDownloader(QtWidgets.QMainWindow):
         self.eng_btn.setCursor(QtCore.Qt.PointingHandCursor)
         self.h_box_2.addWidget(self.chs_btn)
         self.h_box_2.addWidget(self.eng_btn)
+
         self.label2 = CustomLabel(self.w1)
         self.label2.setText("下载设置")
+        self.label11 = QtWidgets.QLabel(self.w1)
+        self.label11.setFont(QtGui.QFont("微软雅黑", 9))
+        self.label11.setText("下载地址")
+        self.label11.setFixedSize(500, 50)
+        self.label11.setContentsMargins(20, 0, 0, 0)
+        self.w7 = QtWidgets.QWidget(self.w1)
+        self.w7.setFixedSize(550, 50)
+        self.w7.setContentsMargins(50, 0, 0, 0)
+        self.h_box_4 = QtWidgets.QHBoxLayout(self.w7)
+        self.path_box = QtWidgets.QLineEdit(self.w7)
+        self.path_box.setFixedSize(350, 36)
+        self.path_box.setReadOnly(True)
+        self.path_box.setFont(QtGui.QFont("微软雅黑", 12))
+        self.path_box.setText(self.filepath)
+        self.change_btn = QtWidgets.QPushButton("更改", self.w7)
+        self.change_btn.setFixedSize(80, 36)
+        self.change_btn.clicked.connect(self.path_change)
+        self.h_box_4.addWidget(self.path_box)
+        self.h_box_4.addWidget(self.change_btn)
         self.label6 = QtWidgets.QLabel(self.w1)
         self.label6.setFont(QtGui.QFont("微软雅黑", 9))
         self.label6.setText("下载线程数")
@@ -267,11 +291,9 @@ class VideoDownloader(QtWidgets.QMainWindow):
 
         self.w6 = QtWidgets.QWidget(self.w1)
         self.w6.setFixedSize(950, 36)
-        self.w6.setContentsMargins(50, 0, 0, 0)
         self.thead_choice = QtWidgets.QComboBox(self.w6)
-        sp = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
-        self.thead_choice.setSizePolicy(sp)
         self.thead_choice.setFixedSize(100, 36)
+        self.thead_choice.move(50, 0)
         self.thead_choice.setFrame(True)
         combobox_text = QtWidgets.QLineEdit()  # 设置combobox字体
         combobox_text.setReadOnly(True)
@@ -359,6 +381,8 @@ class VideoDownloader(QtWidgets.QMainWindow):
         self.v_box_1.addWidget(self.label1)
         self.v_box_1.addWidget(self.label4)
         self.v_box_1.addWidget(self.w2)
+        self.v_box_1.addWidget(self.label11)
+        self.v_box_1.addWidget(self.w7)
         self.v_box_1.addWidget(self.label5)
         self.v_box_1.addWidget(self.w3)
         self.v_box_1.addWidget(self.label2)
@@ -552,6 +576,11 @@ class VideoDownloader(QtWidgets.QMainWindow):
         os.rename("./downloads/final.mp4", f"./downloads/{self.download_filename}.mp4")
         os.remove("./temp/video.flv")
         os.remove("./temp/audio.mp3")
+
+    def path_change(self):
+        self.filepath = QtWidgets.QFileDialog.getExistingDirectory(caption='选取文件夹', directory='./') + '/'
+        # print(self.directory)
+        self.path_box.setText(self.filepath)
 
     def mousePressEvent(self, event):
         if event.button() == QtCore.Qt.LeftButton:
@@ -770,5 +799,4 @@ if __name__ == "__main__":
     with open('StyleSheet.qss', 'r') as f:
         style = f.read()
     app.setStyleSheet(style)
-    # app.setStyle()
     sys.exit(app.exec_())
