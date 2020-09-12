@@ -374,9 +374,18 @@ class VideoDownloader(QtWidgets.QMainWindow):
         self.btn_group1 = QtWidgets.QButtonGroup()
         self.btn_group1.addButton(self.chs_btn)
         self.btn_group1.addButton(self.eng_btn)
+        self.btn_group1.buttonToggled.connect(self.change_language)
         self.btn_group2 = QtWidgets.QButtonGroup()
         self.btn_group2.addButton(self.h_aq)
         self.btn_group2.addButton(self.s_aq)
+        self.btn_group3 = QtWidgets.QButtonGroup()
+        self.btn_group3.addButton(self.blue_btn)
+        self.btn_group3.addButton(self.red_btn)
+        self.btn_group3.addButton(self.yellow_btn)
+        self.btn_group3.addButton(self.green_btn)
+        self.btn_group3.addButton(self.pink_btn)
+        self.btn_group3.addButton(self.purple_btn)
+        self.btn_group3.buttonToggled.connect(self.style_change)
 
         self.v_box_1.addWidget(self.label1)
         self.v_box_1.addWidget(self.label4)
@@ -403,6 +412,7 @@ class VideoDownloader(QtWidgets.QMainWindow):
         self.right_widget.addWidget(self.option_page)
         self.right_widget.setCurrentIndex(0)
 
+        self.tran = QtCore.QTranslator(self)
         self.setCentralWidget(self.central_widget)
         self.show()
 
@@ -520,7 +530,7 @@ class VideoDownloader(QtWidgets.QMainWindow):
         box2 = QtWidgets.QWidget()
         v_box_2 = QtWidgets.QVBoxLayout(box2)
         dl_btn = QtWidgets.QPushButton(box2)
-        dl_btn.clicked.connect(lambda: self.download(num, self.choose_vq.currentIndex(), 0, duration))  # 设置下载按钮触发
+        dl_btn.clicked.connect(lambda: self.download(num, self.choose_vq.currentIndex(), duration))  # 设置下载按钮触发
         v_box_2.addWidget(dl_btn)
         return box2
 
@@ -537,7 +547,7 @@ class VideoDownloader(QtWidgets.QMainWindow):
         self.table.setCellWidget(row, 4, self.video_info[row][3])
         self.table.setCellWidget(row, 5, self.video_info[row][4])
 
-    def download(self, num, vq, aq, duration):
+    def download(self, num, vq, duration):
         print("正在下载")
         item = QtWidgets.QListWidgetItem()
         item.setSizeHint(QtCore.QSize(950, 120))
@@ -549,19 +559,23 @@ class VideoDownloader(QtWidgets.QMainWindow):
         self.download_filename = self.video_info[num-1][1]
 
         # 创建视频下载线程
-        download_thread = DownloadThread(video_res, video_res.headers['Content-Length'], open("./temp/video.flv", 'wb'), 10240, 0)
+        download_thread = DownloadThread(video_res, video_res.headers['Content-Length'], open(f"{self.filepath}/video.flv", 'wb'), 10240, 0)
         download_thread.download_proess_signal.connect(self.set_prosess)
         download_thread.start()
 
+        if self.h_aq.isChecked():
+            aq = 0
+        elif self.s_aq.isChecked():
+            aq = 1
         audio_size = int((duration / 1000) * self.audio[num-1][aq][2] / 8)
         audio_res = self.sess.get_audio(self.audio[num-1][aq][1], audio_size)
 
         # 创建音频下载线程
-        download_thread = DownloadThread(audio_res, audio_res.headers['Content-Length'], open("./temp/audio.mp3", 'wb'), 10240, 1)
+        download_thread = DownloadThread(audio_res, audio_res.headers['Content-Length'], open(f"{self.filepath}/audio.mp3", 'wb'), 10240, 1)
         download_thread.download_proess_signal.connect(self.set_prosess)
         download_thread.start()
 
-        if download_thread.isFinished() == 1:  # 判断是否下载完成
+        if download_thread.isFinished():  # 判断是否下载完成
             self.merge_file()  # 合并音视频
             self.set_prosess(100)  # 刷新进度
 
@@ -581,6 +595,74 @@ class VideoDownloader(QtWidgets.QMainWindow):
         self.filepath = QtWidgets.QFileDialog.getExistingDirectory(caption='选取文件夹', directory='./') + '/'
         # print(self.directory)
         self.path_box.setText(self.filepath)
+
+    def style_change(self):
+        if self.blue_btn.isChecked():
+            with open('BlueStyle.qss', 'r') as f:
+                style = f.read()
+            app.setStyleSheet(style)
+        elif self.red_btn.isChecked():
+            with open('RedStyle.qss', 'r') as f:
+                style = f.read()
+            app.setStyleSheet(style)
+        elif self.yellow_btn.isChecked():
+            with open('YellowStyle.qss', 'r') as f:
+                style = f.read()
+            app.setStyleSheet(style)
+        elif self.green_btn.isChecked():
+            with open('GreenStyle.qss', 'r') as f:
+                style = f.read()
+            app.setStyleSheet(style)
+        elif self.pink_btn.isChecked():
+            with open('PinkStyle.qss', 'r') as f:
+                style = f.read()
+            app.setStyleSheet(style)
+        elif self.purple_btn.isChecked():
+            with open('PurpleStyle.qss', 'r') as f:
+                style = f.read()
+            app.setStyleSheet(style)
+
+    def retranslateUi(self):
+        self.btn1.setText(QtWidgets.QApplication.translate("VideoDownloader", "搜索"))
+        self.btn2.setText(QtWidgets.QApplication.translate("VideoDownloader", "设置"))
+        self.label1.setText(QtWidgets.QApplication.translate("VideoDownloader", "基本设置"))
+        self.label2.setText(QtWidgets.QApplication.translate("VideoDownloader", "下载设置"))
+        self.label3.setText(QtWidgets.QApplication.translate("VideoDownloader", "关于"))
+        self.label4.setText(QtWidgets.QApplication.translate("VideoDownloader", "主题颜色"))
+        self.label5.setText(QtWidgets.QApplication.translate("VideoDownloader", "语言"))
+        self.label6.setText(QtWidgets.QApplication.translate("VideoDownloader", "下载线程数"))
+        self.label7.setText(QtWidgets.QApplication.translate("VideoDownloader", "软件简介"))
+        self.label8.setText(QtWidgets.QApplication.translate("VideoDownloader", "赞助方式"))
+        # self.label9.setText(QtWidgets.QApplication.translate("VideoDownloader", ""))
+        self.label10.setText(QtWidgets.QApplication.translate("VideoDownloader", "下载音质"))
+        self.label11.setText(QtWidgets.QApplication.translate("VideoDownloader", "下载地址"))
+        self.info_box.setTabText(0, QtWidgets.QApplication.translate("VideoDownloader", "队列"))
+        self.info_box.setTabText(1, QtWidgets.QApplication.translate("VideoDownloader", "正在下载"))
+        self.table.setHorizontalHeaderLabels(["", QtWidgets.QApplication.translate("VideoDownloader", "视频名"), QtWidgets.QApplication.translate("VideoDownloader", "时长"), QtWidgets.QApplication.translate("VideoDownloader", "大小"), QtWidgets.QApplication.translate("VideoDownloader", "画质"), ""])
+        self.search_box.setPlaceholderText(QtWidgets.QApplication.translate("VideoDownloader", "输入视频地址"))
+        self.engine.setItemText(0, QtWidgets.QApplication.translate("VideoDownloader", "b站"))
+        self.blue_btn.setText(QtWidgets.QApplication.translate("VideoDownloader", "胖次蓝"))
+        self.red_btn.setText(QtWidgets.QApplication.translate("VideoDownloader", "姨妈红"))
+        self.yellow_btn.setText(QtWidgets.QApplication.translate("VideoDownloader", "咸蛋黄"))
+        self.pink_btn.setText(QtWidgets.QApplication.translate("VideoDownloader", "少女粉"))
+        self.purple_btn.setText(QtWidgets.QApplication.translate("VideoDownloader", "基佬紫"))
+        self.green_btn.setText(QtWidgets.QApplication.translate("VideoDownloader", "草苗绿"))
+        self.change_btn.setText(QtWidgets.QApplication.translate("VideoDownloader", "更改"))
+        self.h_aq.setText(QtWidgets.QApplication.translate("VideoDownloader", "高音质"))
+        self.s_aq.setText(QtWidgets.QApplication.translate("VideoDownloader", "标准音质"))
+
+    def change_language(self):
+        if self.eng_btn.isChecked():
+            self.tran.load("chs-eng")
+            _app = QtWidgets.QApplication.instance()
+            _app.installTranslator(self.tran)
+        else:
+            _app = QtWidgets.QApplication.instance()
+            _app.removeTranslator(self.tran)
+
+    def changeEvent(self, event):
+        if event.type() == QtCore.QEvent.LanguageChange:
+            self.retranslateUi()
 
     def mousePressEvent(self, event):
         if event.button() == QtCore.Qt.LeftButton:
@@ -667,7 +749,7 @@ class DownloadThread(QtCore.QThread):
                 if self.state == 0:
                     proess = offset / int(self.filesize) * 90  # 90%为视频下载完成
                 elif self.state == 1:
-                    proess = offset / int(self.filesize) * 5 + 90  # 95%为视频下载完成
+                    proess = offset / int(self.filesize) * 5 + 90  # 95%为音频下载完成
                 # print(f'proess:{proess}')
                 self.download_proess_signal.emit(int(proess))  # 发送信号
 
@@ -692,14 +774,14 @@ class CustomBtn(QtWidgets.QAbstractButton):
         if self.hover_flag and not self.isChecked():
             pen = QtGui.QPen(QtGui.QColor(0, 0, 0, 0))
             painter.setPen(pen)
-            brush = QtGui.QBrush(QtGui.QColor(144, 198, 244, 205))
+            brush = QtGui.QBrush(QtGui.QColor(200, 200, 200, 154))
             painter.setBrush(brush)
             painter.setRenderHint(QtGui.QPainter.Antialiasing)
             painter.drawRoundedRect(0, 0, 230, 40, 7.0, 7.0)
         if self.isChecked():
             pen = QtGui.QPen(QtGui.QColor(0, 0, 0, 0))
             painter.setPen(pen)
-            brush = QtGui.QBrush(QtGui.QColor(39, 69, 133, 205))
+            brush = QtGui.QBrush(QtGui.QColor(64, 64, 64, 154))
             painter.setBrush(brush)
             painter.setRenderHint(QtGui.QPainter.Antialiasing)
             painter.drawRoundedRect(0, 0, 230, 40, 7.0, 7.0)
@@ -796,7 +878,8 @@ if __name__ == "__main__":
     run = VideoDownloader()
     run.setup_ui()
     run.engine_switch()
-    with open('StyleSheet.qss', 'r') as f:
-        style = f.read()
-    app.setStyleSheet(style)
+    run.style_change()
+    # with open('StyleSheet.qss', 'r') as f:
+    #     style = f.read()
+    # app.setStyleSheet(style)
     sys.exit(app.exec_())

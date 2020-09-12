@@ -1,0 +1,146 @@
+#left_widget {
+    background-color: rgb(243, 173, 43);
+}
+
+#top_bar {
+    background-color: rgb(238, 210, 103);
+}
+
+#close_btn {
+    border-image: url(./icons/close_btn_normal.png);
+}
+
+#close_btn:hover {
+    border-image: url(./icons/close_btn_hover.png);
+}
+
+#close_btn:pressed {
+    border-image: url(./icons/close_btn_pressed.png);
+}
+
+#minimize_btn {
+    border-image: url(./icons/minimize_btn_normal.png);
+}
+
+#minimize_btn:hover {
+    border-image: url(./icons/minimize_btn_hover.png);
+}
+
+#minimize_btn:pressed {
+    border-image: url(./icons/minimize_btn_pressed.png);
+}
+
+QTabBar::tab:first {
+    margin-left: 350px;
+}
+
+QTabBar::tab:last {
+    margin-left: 20px;
+}
+
+QTabBar::tab {
+    border-image: url(./icons/tab_normal.png);
+    width: 100px;
+    height: 40px;
+}
+
+QTabBar::tab:selected {
+    border-image: url(./icons/tab_selected_yellow.png);
+    color: rgb(233, 135, 61);
+}
+
+QMainWindow {
+    background-color: white;
+}
+
+QLabel {
+    color: white;
+}
+
+#search_box {
+    background-color: rgba(255, 255, 255, 205);
+}
+
+#search_btn {
+    border-image: url(./icons/search_btn_normal.png);
+}
+
+#search_btn:pressed {
+    border-image: url(./icons/search_btn_pressed.png);
+}
+
+#engine {
+    border-image: url(./icons/engine.png);
+}
+
+#engine::drop-down {
+    border-image: url(./icons/engine_down_arrow_normal.png);
+    width: 20px;
+    height: 20px;
+    margin-top: 10px;
+    margin-right: 5px;
+}
+
+#engine::drop-down:pressed {
+    border-image: url(./icons/engine_down_arrow_pressed.png);
+    width: 20px;
+    height: 20px;
+    margin-top: 10px;
+    margin-right: 5px;
+}
+
+QWidget QLabel {
+    color: black;
+}
+
+#about {
+    color: white;
+}
+
+QScrollBar:vertical {
+    background:rgba(0, 0, 0, 0);
+    width:15px;
+}
+
+QScrollBar::handle:vertical {
+    background:rgb(200, 200, 200);
+    min-height:100px;
+    border-radius: 7px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background:rgb(150, 150, 150);
+    min-height:100px;
+    border-radius: 7px;
+}
+
+QScrollBar::handle:vertical:pressed {
+    background:rgb(100, 100, 100);
+    min-height:100px;
+    border-radius: 7px;
+}
+
+QScrollBar::add-line:vertical {
+    height:0px;
+}
+
+QScrollBar::sub-line:vertical {
+    height:0px;
+}
+
+QScrollBar::up-arrow:vertical,QScrollBar::down-arrow:vertical {
+    width:0px;
+    height:0px;
+}
+
+QScrollBar::add-page:vertical {
+    background:rgba(0, 0, 0, 0);
+}
+
+QScrollBar::sub-page:vertical {
+    background:rgba(0, 0, 0, 0);
+}
+
+#w1 {
+    background-color: white;
+}
