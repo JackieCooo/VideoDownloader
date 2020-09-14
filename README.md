@@ -11,12 +11,12 @@
 - [项目简介](#项目简介)
     - [软件预览](#软件预览)
     - [软件简介](#软件简介)
-    - [支持情况]()
-- [安装](安装)
-- [打包](打包)
-- [更新日志](更新日志)
-- [要增加的新功能](要增加的新功能)
-- [赞助](赞助)
+    - [支持情况](#支持情况)
+- [安装](#安装)
+- [打包](#打包)
+- [更新日志](#更新日志)
+- [要增加的新功能](#要增加的新功能)
+- [赞助](#赞助)
 - [参考文章](#参考文章)
 
 ## *项目简介*
@@ -37,7 +37,7 @@
 步骤1  
 确保电脑已安装FFmpeg组件，本软件依赖此组件进行视频文件的处理。  
 FFmpeg下载：  
-![](https://github.com/JackieCooo/VideoDownloader/blob/master/README%20icons/ffmepg_logo.png) [官网下载](http://ffmpeg.org/download.html)
+![](./README%20icons/ffmepg_logo.png) [官网下载](http://ffmpeg.org/download.html)
 ![](./README%20icons/baiducloud_logo.png) [百度云]()
 
 步骤2  
