@@ -1,22 +1,23 @@
 
 # *视频下载器*
-[English README]()  
+[English README]()
+***
 ![](https://img.shields.io/github/release/JackieCooo/VideoDownloader?style=flat-square)
 ![](https://img.shields.io/github/last-commit/JackieCooo/VideoDownloader?style=flat-square)
 ![](https://img.shields.io/static/v1?label=Pyqt5&message=v5.14.2&color=blue?style=flat-square)
 ![](https://img.shields.io/github/license/JackieCooo/VideoDownloader?style=flat-square&color=yellow)
 
 ## *目录*
-- 项目简介
+- [项目简介](#项目简介)
     - [软件预览](#软件预览)
     - [软件简介](#软件简介)
-    - 支持情况
-- 安装
-- 打包
-- 更新日志
-- 要增加的新功能
-- 赞助
-- 参考文章
+    - [支持情况]()
+- [安装](安装)
+- [打包](打包)
+- [更新日志](更新日志)
+- [要增加的新功能](要增加的新功能)
+- [赞助](赞助)
+- [参考文章](#参考文章)
 
 ## *项目简介*
 
@@ -36,7 +37,7 @@
 步骤1  
 确保电脑已安装FFmpeg组件，本软件依赖此组件进行视频文件的处理。  
 FFmpeg下载：  
-![](./README%20icons/ffmepg_logo.png) [官网下载](http://ffmpeg.org/download.html)
+![](https://github.com/JackieCooo/VideoDownloader/blob/master/README%20icons/ffmepg_logo.png) [官网下载](http://ffmpeg.org/download.html)
 ![](./README%20icons/baiducloud_logo.png) [百度云]()
 
 步骤2  
