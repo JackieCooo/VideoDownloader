@@ -565,7 +565,7 @@ class VideoDownloader(QtWidgets.QMainWindow):
 
         if self.h_aq.isChecked():
             aq = 0
-        elif self.s_aq.isChecked():
+        else:
             aq = 1
         audio_size = int((duration / 1000) * self.audio[num-1][aq][2] / 8)
         audio_res = self.sess.get_audio(self.audio[num-1][aq][1], audio_size)
@@ -879,7 +879,4 @@ if __name__ == "__main__":
     run.setup_ui()
     run.engine_switch()
     run.style_change()
-    # with open('StyleSheet.qss', 'r') as f:
-    #     style = f.read()
-    # app.setStyleSheet(style)
     sys.exit(app.exec_())
