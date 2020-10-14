@@ -1,22 +1,17 @@
 import sys
 import os
 from PyQt5 import QtWidgets, QtGui, QtCore
-from VideoSource import bilibili
+from VideoSource import bilibili, tencent
 from PIL import Image
 import ctypes
 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("myappid")
 
 
 class VideoDownloader(QtWidgets.QMainWindow):
-    """
-    bug: 队列超过一个视频源时，画质选择会有冲突
-         下载队列超过一个视频会有缩略图显示问题
-         有多线程问题
-    """
 
     def __init__(self):
         super(VideoDownloader, self).__init__()
-        self.engine_list = ['b站', '...']
+        self.engine_list = ['b站', '腾讯视频']
         self.sess = None
         self.video = []
         self.audio = []
@@ -125,6 +120,7 @@ class VideoDownloader(QtWidgets.QMainWindow):
         combobox_text.setAlignment(QtCore.Qt.AlignCenter)
         self.engine.setLineEdit(combobox_text)
         combobox_drop_down = QtWidgets.QListWidget()  # 设置combobox下拉菜单字体
+        combobox_drop_down.setFrameShape(QtWidgets.QListWidget.NoFrame)
         for i in self.engine_list:
             item = QtWidgets.QListWidgetItem(i)
             item.setTextAlignment(QtCore.Qt.AlignCenter)
@@ -159,11 +155,10 @@ class VideoDownloader(QtWidgets.QMainWindow):
         self.info_box = QtWidgets.QTabWidget(self.download_page)
         self.info_box.setObjectName("info_box")
         self.info_box.setGeometry(0, 0, 950, 740)
-        # self.info_box.setF
 
         # 队列
         self.sequence = QtWidgets.QWidget()
-        self.table = CustomTable(self.sequence)
+        self.table = QtWidgets.QTableWidget(self.sequence)
         self.table.setGeometry(0, 0, 950, 700)
         font = QtGui.QFont()
         font.setFamily("微软雅黑")
@@ -205,7 +200,6 @@ class VideoDownloader(QtWidgets.QMainWindow):
         self.scroll_area.setGeometry(0, 0, 950, 740)
         self.scroll_area.setFrameShape(QtWidgets.QFrame.NoFrame)
         self.scroll_area.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        # self.scroll_area.setVerticalScrollBar()
         self.w1 = QtWidgets.QWidget()
         self.w1.resize(950, 1600)
         self.w1.setObjectName("w1")
@@ -269,22 +263,26 @@ class VideoDownloader(QtWidgets.QMainWindow):
         self.label11.setFixedSize(500, 50)
         self.label11.setContentsMargins(20, 0, 0, 0)
         self.w7 = QtWidgets.QWidget(self.w1)
-        self.w7.setFixedSize(550, 50)
+        self.w7.setFixedSize(750, 50)
         self.w7.setContentsMargins(50, 0, 0, 0)
         self.h_box_4 = QtWidgets.QHBoxLayout(self.w7)
         self.path_box = QtWidgets.QLineEdit(self.w7)
-        self.path_box.setFixedSize(350, 36)
+        self.path_box.setFixedSize(550, 36)
         self.path_box.setReadOnly(True)
-        self.path_box.setFont(QtGui.QFont("微软雅黑", 12))
+        self.path_box.setFont(QtGui.QFont("微软雅黑", 10))
         self.path_box.setText(self.filepath)
+        self.path_box.setObjectName("path_box")
+        self.path_box.setContentsMargins(5, 0, 0, 0)
         self.change_btn = QtWidgets.QPushButton("更改", self.w7)
         self.change_btn.setFixedSize(80, 36)
         self.change_btn.clicked.connect(self.path_change)
+        self.change_btn.setObjectName("change_btn")
+        self.change_btn.setCursor(QtCore.Qt.PointingHandCursor)
         self.h_box_4.addWidget(self.path_box)
         self.h_box_4.addWidget(self.change_btn)
         self.label6 = QtWidgets.QLabel(self.w1)
         self.label6.setFont(QtGui.QFont("微软雅黑", 9))
-        self.label6.setText("下载线程数")
+        self.label6.setText("下载线程数(尚未加入)")
         self.label6.setContentsMargins(20, 0, 0, 0)
         self.label6.setSizePolicy(sp)
         self.label6.setFixedSize(500, 50)
@@ -300,6 +298,7 @@ class VideoDownloader(QtWidgets.QMainWindow):
         combobox_text.setAlignment(QtCore.Qt.AlignCenter)
         self.thead_choice.setLineEdit(combobox_text)
         combobox_drop_down = QtWidgets.QListWidget()  # 设置combobox下拉菜单字体
+        combobox_drop_down.setFrameShape(QtWidgets.QListWidget.NoFrame)
         array = [i for i in range(1, 65)]
         for i in array:
             item = QtWidgets.QListWidgetItem(str(i))
@@ -311,6 +310,7 @@ class VideoDownloader(QtWidgets.QMainWindow):
         font.setBold(True)
         self.thead_choice.setFont(font)
         self.thead_choice.setCursor(QtCore.Qt.PointingHandCursor)
+        self.thead_choice.setObjectName("thread_choice")
 
         self.label10 = QtWidgets.QLabel(self.w1)
         self.label10.setFont(QtGui.QFont("微软雅黑", 9))
@@ -335,7 +335,6 @@ class VideoDownloader(QtWidgets.QMainWindow):
         self.s_aq.setCursor(QtCore.Qt.PointingHandCursor)
         self.h_box_3.addWidget(self.h_aq)
         self.h_box_3.addWidget(self.s_aq)
-
 
         self.label3 = CustomLabel(self.w1)
         self.label3.setText("关于")
@@ -369,7 +368,6 @@ class VideoDownloader(QtWidgets.QMainWindow):
         self.Alipay.setPixmap(QtGui.QPixmap("./icons/Alipay.png"))
         self.Alipay.setSizePolicy(sp)
         self.Alipay.setFixedSize(400, 600)
-
 
         self.btn_group1 = QtWidgets.QButtonGroup()
         self.btn_group1.addButton(self.chs_btn)
@@ -421,7 +419,7 @@ class VideoDownloader(QtWidgets.QMainWindow):
         if self.engine.currentIndex() == 0:
             self.sess = bilibili.bilibiliVideo()
         elif self.engine.currentIndex() == 1:
-            pass
+            self.sess = tencent.Tencent()
         elif self.engine.currentIndex() == 2:
             pass
         elif self.engine.currentIndex() == 3:
@@ -447,7 +445,7 @@ class VideoDownloader(QtWidgets.QMainWindow):
             time = f"{minute}:{second}"
 
         # 保存视频信息
-        temp3 = [self.set_pic(), filename, time, self.set_quality_select(duration, self.num), self.set_dl_btn(self.num, duration)]
+        temp3 = [self.set_pic(), filename, time, self.set_quality_select(duration, self.num), self.set_op_btn(self.num, duration)]
         self.video_info.append(temp3)
 
         self.show_result()  # 展示视频信息
@@ -480,8 +478,7 @@ class VideoDownloader(QtWidgets.QMainWindow):
         v_box_1.setSpacing(0)
         v_box_1.setContentsMargins(0, 0, 0, 0)
         self.choose_vq = QtWidgets.QComboBox(box1)
-        sp = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
-        self.choose_vq.setSizePolicy(sp)
+        self.choose_vq.setObjectName("choose_vq")
         self.choose_vq.setFixedHeight(36)
         temp = []
         for i in self.video[num-1]:
@@ -499,15 +496,9 @@ class VideoDownloader(QtWidgets.QMainWindow):
         text = QtWidgets.QLineEdit()  # 设置combobox字体
         text.setReadOnly(True)
         text.setAlignment(QtCore.Qt.AlignCenter)
-        palette = QtGui.QPalette()
-        brush = QtGui.QBrush(QtGui.QColor(0, 0, 0))
-        brush.setStyle(QtCore.Qt.SolidPattern)
-        palette.setBrush(QtGui.QPalette.Active, QtGui.QPalette.Text, brush)
-        palette.setBrush(QtGui.QPalette.Inactive, QtGui.QPalette.Text, brush)
-        palette.setBrush(QtGui.QPalette.Disabled, QtGui.QPalette.Text, brush)
-        self.choose_vq.setPalette(palette)
         self.choose_vq.setLineEdit(text)
         combobox_drop_down = QtWidgets.QListWidget()  # 设置combobox下拉菜单字体
+        combobox_drop_down.setFrameShape(QtWidgets.QListWidget.NoFrame)
         for i in temp:
             item = QtWidgets.QListWidgetItem(i)
             item.setTextAlignment(QtCore.Qt.AlignCenter)
@@ -525,14 +516,22 @@ class VideoDownloader(QtWidgets.QMainWindow):
         del temp
         return box1
 
-    def set_dl_btn(self, num, duration):
+    def set_op_btn(self, num, duration):
         # 设置开始下载按钮
         box2 = QtWidgets.QWidget()
-        v_box_2 = QtWidgets.QVBoxLayout(box2)
+        h_box_1 = QtWidgets.QHBoxLayout(box2)
         dl_btn = QtWidgets.QPushButton(box2)
+        dl_btn.setObjectName("dl_btn")
         dl_btn.clicked.connect(lambda: self.download(num, self.choose_vq.currentIndex(), duration))  # 设置下载按钮触发
-        v_box_2.addWidget(dl_btn)
+        delete_btn = QtWidgets.QPushButton(box2)
+        delete_btn.setObjectName("delete_btn")
+        delete_btn.clicked.connect(lambda: self.delete(num))  # 删除队列触发
+        h_box_1.addWidget(dl_btn)
+        h_box_1.addWidget(delete_btn)
         return box2
+
+    def delete(self, num):
+        pass
 
     def show_result(self):
         self.table.insertRow(self.table.rowCount())
@@ -633,7 +632,7 @@ class VideoDownloader(QtWidgets.QMainWindow):
         self.label6.setText(QtWidgets.QApplication.translate("VideoDownloader", "下载线程数"))
         self.label7.setText(QtWidgets.QApplication.translate("VideoDownloader", "软件简介"))
         self.label8.setText(QtWidgets.QApplication.translate("VideoDownloader", "赞助方式"))
-        # self.label9.setText(QtWidgets.QApplication.translate("VideoDownloader", ""))
+        self.label9.setText(QtWidgets.QApplication.translate("VideoDownloader", "软件版本: ver 1.0\n该软件为开源软件项目，并会持续更新\n开源地址:https://github.com/JackieCooo/VideoDownloader"))
         self.label10.setText(QtWidgets.QApplication.translate("VideoDownloader", "下载音质"))
         self.label11.setText(QtWidgets.QApplication.translate("VideoDownloader", "下载地址"))
         self.info_box.setTabText(0, QtWidgets.QApplication.translate("VideoDownloader", "队列"))
@@ -725,7 +724,7 @@ class ListDelegate(QtWidgets.QStyledItemDelegate):
             painter.drawRect(rect.topLeft().x(), rect.topLeft().y(), rect.width(), rect.height())
 
 
-class DownloadThread(QtCore.QThread):
+class DownloadThread(QtCore.QThread):  # 下载线程
     download_proess_signal = QtCore.pyqtSignal(int)  # 创建信号
 
     def __init__(self, res, filesize, fileobj, buffer, state):
@@ -871,6 +870,35 @@ class ColorChangingBtn(QtWidgets.QAbstractButton):
             painter.setPen(self.color)
             painter.setFont(QtGui.QFont("微软雅黑", 9))
             painter.drawText(0, 60, 58, 20, QtCore.Qt.AlignCenter, self.text())
+
+
+class CustomWidget(QtWidgets.QWidget):
+
+    def __init__(self, parent):
+        super(CustomWidget, self).__init__(parent)
+
+    def mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            self.m_flag = True
+            self.m_Position = event.globalPos() - self.pos()  # 获取鼠标相对窗口的位置
+            event.accept()
+
+    def mouseMoveEvent(self, event):
+        if QtCore.Qt.LeftButton and self.m_flag:
+            self.move(event.globalPos() - self.m_Position)  # 更改窗口位置
+            event.accept()
+
+    def mouseReleaseEvent(self, event):
+        self.m_flag = False
+
+
+class DropDownList(QtWidgets.QListWidget):
+
+    def __init__(self, parent):
+        super(DropDownList, self).__init__(parent)
+
+    def paintEvent(self, event):
+        pass
 
 
 if __name__ == "__main__":

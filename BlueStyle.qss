@@ -144,3 +144,74 @@ QScrollBar::sub-page:vertical {
 #w1 {
     background-color: white;
 }
+
+#choose_vq, #thread_choice {
+    border-image: url(./icons/blue_choose_box.png);
+}
+
+#choose_vq::drop-down, #thread_choice::drop-down {
+    border-image: url(./icons/blue_down_arrow_normal.png);
+    width: 20px;
+    height: 20px;
+    margin-top: 10px;
+    margin-right: 5px;
+}
+
+#choose_vq::drop-down:pressed, #thread_choice::drop-down:pressed {
+    border-image: url(./icons/blue_down_arrow_pressed.png);
+    width: 20px;
+    height: 20px;
+    margin-top: 10px;
+    margin-right: 5px;
+}
+
+#dl_btn {
+    border-image: url(./icons/blue_dl_btn_normal.png);
+    width: 20px;
+    height: 20px;
+}
+
+#dl_btn:pressed {
+    border-image: url(./icons/blue_dl_btn_pressed.png);
+    width: 20px;
+    height: 20px;
+}
+
+#delete_btn {
+    border-image: url(./icons/blue_delete_btn_normal.png);
+    width: 20px;
+    height: 20px;
+}
+
+#delete_btn:pressed {
+    border-image: url(./icons/blue_delete_btn_pressed.png);
+    width: 20px;
+    height: 20px;
+}
+
+QCheckBox::indicator {
+    width: 20px;
+    height: 20px;
+}
+
+QCheckBox::indicator:unchecked {
+    border-image: url(./icons/checkbox_unchecked.png);
+    width: 20px;
+    height: 20px;
+}
+
+QCheckBox::indicator:checked {
+    border-image: url(./icons/checkbox_checked.png);
+    width: 20px;
+    height: 20px;
+}
+
+#path_box {
+    border-image: url(./icons/blue_path_box.png);
+    color: rgb(39, 69, 133);
+}
+
+#change_btn {
+    border-image: url(./icons/blue_change_btn_normal.png);
+    color: rgb(39, 69, 133);
+}
