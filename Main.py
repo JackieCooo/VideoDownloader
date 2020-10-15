@@ -120,7 +120,7 @@ class VideoDownloader(QtWidgets.QMainWindow):
         combobox_text.setAlignment(QtCore.Qt.AlignCenter)
         self.engine.setLineEdit(combobox_text)
         combobox_drop_down = QtWidgets.QListWidget()  # 设置combobox下拉菜单字体
-        combobox_drop_down.setFrameShape(QtWidgets.QListWidget.NoFrame)
+        combobox_drop_down.setFrameShape(QtWidgets.QFrame.NoFrame)
         for i in self.engine_list:
             item = QtWidgets.QListWidgetItem(i)
             item.setTextAlignment(QtCore.Qt.AlignCenter)
@@ -298,7 +298,6 @@ class VideoDownloader(QtWidgets.QMainWindow):
         combobox_text.setAlignment(QtCore.Qt.AlignCenter)
         self.thead_choice.setLineEdit(combobox_text)
         combobox_drop_down = QtWidgets.QListWidget()  # 设置combobox下拉菜单字体
-        combobox_drop_down.setFrameShape(QtWidgets.QListWidget.NoFrame)
         array = [i for i in range(1, 65)]
         for i in array:
             item = QtWidgets.QListWidgetItem(str(i))
@@ -307,7 +306,6 @@ class VideoDownloader(QtWidgets.QMainWindow):
         self.thead_choice.setModel(combobox_drop_down.model())
         self.thead_choice.setView(combobox_drop_down)
         font = QtGui.QFont("微软雅黑", 10)
-        font.setBold(True)
         self.thead_choice.setFont(font)
         self.thead_choice.setCursor(QtCore.Qt.PointingHandCursor)
         self.thead_choice.setObjectName("thread_choice")
@@ -349,7 +347,7 @@ class VideoDownloader(QtWidgets.QMainWindow):
         self.label9.setText("软件版本: ver 1.0\n该软件为开源软件项目，并会持续更新\n开源地址:https://github.com/JackieCooo/VideoDownloader")
         self.label9.setContentsMargins(50, 0, 0, 0)
         self.label9.setSizePolicy(sp)
-        self.label9.setFixedSize(500, 100)
+        self.label9.setFixedSize(600, 100)
         self.label8 = QtWidgets.QLabel(self.w1)
         self.label8.setFont(QtGui.QFont("微软雅黑", 9))
         self.label8.setText("赞助方式")
@@ -890,15 +888,6 @@ class CustomWidget(QtWidgets.QWidget):
 
     def mouseReleaseEvent(self, event):
         self.m_flag = False
-
-
-class DropDownList(QtWidgets.QListWidget):
-
-    def __init__(self, parent):
-        super(DropDownList, self).__init__(parent)
-
-    def paintEvent(self, event):
-        pass
 
 
 if __name__ == "__main__":
