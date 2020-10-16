@@ -874,6 +874,7 @@ class CustomWidget(QtWidgets.QWidget):
 
     def __init__(self, parent):
         super(CustomWidget, self).__init__(parent)
+        self.m_flag = False
 
     def mousePressEvent(self, event):
         if event.button() == QtCore.Qt.LeftButton:

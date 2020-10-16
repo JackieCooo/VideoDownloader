@@ -144,3 +144,148 @@ QScrollBar::sub-page:vertical {
 #w1 {
     background-color: white;
 }
+
+#dl_btn {
+    border-image: url(./icons/green_dl_btn_normal.png);
+    width: 20px;
+    height: 20px;
+}
+
+#dl_btn:pressed {
+    border-image: url(./icons/green_dl_btn_pressed.png);
+    width: 20px;
+    height: 20px;
+}
+
+#delete_btn {
+    border-image: url(./icons/green_delete_btn_normal.png);
+    width: 20px;
+    height: 20px;
+}
+
+#delete_btn:pressed {
+    border-image: url(./icons/green_delete_btn_pressed.png);
+    width: 20px;
+    height: 20px;
+}
+
+QCheckBox::indicator {
+    width: 20px;
+    height: 20px;
+}
+
+QCheckBox::indicator:unchecked {
+    border-image: url(./icons/checkbox_unchecked.png);
+    width: 20px;
+    height: 20px;
+}
+
+QCheckBox::indicator:checked {
+    border-image: url(./icons/green_checkbox_checked.png);
+    width: 20px;
+    height: 20px;
+}
+
+#path_box {
+    border-image: url(./icons/blue_path_box.png);
+    color: rgb(82, 120, 81);
+}
+
+#change_btn {
+    border-image: url(./icons/green_change_btn_normal.png);
+    color: rgb(82, 120, 81);
+}
+
+#change_btn:pressed {
+    border-image: url(./icons/green_change_btn_pressed.png);
+    color: rgb(82, 120, 81);
+}
+
+QComboBox {
+	padding: 1px 0px 1px 12px;
+	border-image: url(./icons/green_choose_box.png);
+}
+
+QComboBox:on{ /* the popup opens */
+	border-image: url(./icons/green_choose_box_on.png);
+}
+
+QComboBox::drop-down{
+    border-image: url(./icons/green_down_arrow_normal.png);
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+    width: 20px;
+    height: 20px;
+    margin-top: 10px;
+    margin-right: 5px;
+}
+
+QComboBox::drop-down:pressed{
+    border-image: url(./icons/green_down_arrow_pressed.png);
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+    width: 20px;
+    height: 20px;
+    margin-top: 10px;
+    margin-right: 5px;
+}
+
+QComboBox::drop-down:on{
+	border-image: none;
+}
+
+QComboBox QAbstractItemView {
+	border-image: url(./icons/green_choose_box_item.png);
+	outline: 0px;
+}
+
+QComboBox QAbstractItemView::item {
+	height: 32px;
+	background-color: transparent;
+}
+
+QComboBox QAbstractItemView::item:hover {
+	color: #FFFFFF;
+	background-color: rgba(120, 177, 98, 128);
+}
+
+QComboBox QAbstractItemView::item:selected {
+	color: #FFFFFF;
+	background-color: rgba(120, 177, 98, 128);
+}
+
+QComboBox QAbstractScrollArea QScrollBar:vertical {
+    background: transparent;
+    width: 10px;
+}
+
+QComboBox QAbstractScrollArea QScrollBar::handle:vertical {
+    background: rgb(200, 200, 200);
+    min-height: 100px;
+    border-radius: 5px;
+}
+
+QComboBox QAbstractScrollArea QScrollBar::handle:vertical:hover {
+    background: rgb(150, 150, 150);
+    min-height: 100px;
+    border-radius: 5px;
+}
+
+QComboBox QAbstractScrollArea QScrollBar::handle:vertical:pressed {
+    background: rgb(100, 100, 100);
+    min-height: 100px;
+    border-radius: 5px;
+}
+
+QComboBox QAbstractScrollArea QScrollBar::add-line:vertical, QComboBox QAbstractScrollArea QScrollBar::sub-line:vertical {
+    height: 0px;
+}
+
+QComboBox QAbstractScrollArea QScrollBar::up-arrow:vertical, QComboBox QAbstractScrollArea QScrollBar::down-arrow:vertical {
+    width: 0px;
+    height: 0px;
+}
+
+QComboBox QAbstractScrollArea QScrollBar::add-page:vertical, QComboBox QAbstractScrollArea QScrollBar::sub-page:vertical {
+    background: transparent;
+}

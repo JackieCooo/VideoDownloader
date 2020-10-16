@@ -145,26 +145,6 @@ QScrollBar::sub-page:vertical {
     background-color: white;
 }
 
-/*#choose_vq, #thread_choice {*/
-/*    border-image: url(./icons/blue_choose_box.png);*/
-/*}*/
-
-/*#choose_vq::drop-down, #thread_choice::drop-down {*/
-/*    border-image: url(./icons/blue_down_arrow_normal.png);*/
-/*    width: 20px;*/
-/*    height: 20px;*/
-/*    margin-top: 10px;*/
-/*    margin-right: 5px;*/
-/*}*/
-
-/*#choose_vq::drop-down:pressed, #thread_choice::drop-down:pressed {*/
-/*    border-image: url(./icons/blue_down_arrow_pressed.png);*/
-/*    width: 20px;*/
-/*    height: 20px;*/
-/*    margin-top: 10px;*/
-/*    margin-right: 5px;*/
-/*}*/
-
 #dl_btn {
     border-image: url(./icons/blue_dl_btn_normal.png);
     width: 20px;
@@ -201,7 +181,7 @@ QCheckBox::indicator:unchecked {
 }
 
 QCheckBox::indicator:checked {
-    border-image: url(./icons/checkbox_checked.png);
+    border-image: url(./icons/blue_checkbox_checked.png);
     width: 20px;
     height: 20px;
 }
@@ -213,6 +193,11 @@ QCheckBox::indicator:checked {
 
 #change_btn {
     border-image: url(./icons/blue_change_btn_normal.png);
+    color: rgb(39, 69, 133);
+}
+
+#change_btn:pressed {
+    border-image: url(./icons/blue_change_btn_pressed.png);
     color: rgb(39, 69, 133);
 }
 
@@ -268,6 +253,7 @@ QComboBox QAbstractItemView::item:selected {
 	color: #FFFFFF;
 	background-color: rgba(67, 125, 198, 128);
 }
+
 QComboBox QAbstractScrollArea QScrollBar:vertical {
     background: transparent;
     width: 10px;
