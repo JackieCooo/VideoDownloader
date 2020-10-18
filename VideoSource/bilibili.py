@@ -43,7 +43,7 @@ class bilibiliVideo(object):
 
     def get_audio(self, url, size):
         self.header2.update({'Range': f'bytes=0-{size}'})
-        res = requests.get(url=url, headers=self.header2)
+        res = requests.get(url=url, headers=self.header2, stream=True)
         return res
         # with open('./temp/audio.mp3', 'wb') as f:
         #     for data in res.iter_content(1024):
@@ -89,9 +89,26 @@ class bilibiliVideo(object):
             f.write(pic)
         return self.filename, self.duration, video_url, audio_url
 
+    def merge_file(self):
+        video_path = "../temp/video.flv"
+        audio_path = "../temp/audio.mp3"
+        os.system("ffmpeg -i " + video_path + " -i " + audio_path + " -codec copy ../downloads/final.mp4")
+        os.rename("../downloads/final.mp4", f"../downloads/{self.filename}.mp4")
+        os.remove("../temp/video.flv")
+        os.remove("../temp/audio.mp3")
+
 
 if __name__ == '__main__':
     app = bilibiliVideo()
-    name, duration, video_url, audio_url = app.get_info("https://www.bilibili.com/video/BV1fZ4y1u7nc")
+    name, duration, video_url, audio_url = app.get_info("https://www.bilibili.com/video/BV13i4y137ox")
     video_size = int((duration / 1000) * video_url[0][2] / 8)
-    app.get_video(video_url[0][1], video_size)
+    res = app.get_video(video_url[0][1], video_size)
+    with open("../temp/video.flv", "wb") as f:
+        for i in res.iter_content(1024):
+            f.write(i)
+    audio_size = int((duration / 1000) * audio_url[0][2] / 8)
+    res = app.get_audio(audio_url[0][1], audio_size)
+    with open("../temp/audio.mp3", "wb") as f:
+        for i in res.iter_content(1024):
+            f.write(i)
+    app.merge_file()

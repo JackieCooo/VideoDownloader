@@ -496,17 +496,13 @@ class VideoDownloader(QtWidgets.QMainWindow):
         text.setAlignment(QtCore.Qt.AlignCenter)
         self.choose_vq.setLineEdit(text)
         combobox_drop_down = QtWidgets.QListWidget()  # 设置combobox下拉菜单字体
-        combobox_drop_down.setFrameShape(QtWidgets.QListWidget.NoFrame)
         for i in temp:
             item = QtWidgets.QListWidgetItem(i)
             item.setTextAlignment(QtCore.Qt.AlignCenter)
             combobox_drop_down.addItem(item)
         self.choose_vq.setModel(combobox_drop_down.model())
         self.choose_vq.setView(combobox_drop_down)
-        font = QtGui.QFont()
-        font.setFamily("微软雅黑")
-        font.setBold(True)
-        font.setPointSize(10)
+        font = QtGui.QFont("微软雅黑", 10)
         self.choose_vq.setFont(font)
         self.choose_vq.setCursor(QtCore.Qt.PointingHandCursor)
         self.choose_vq.currentIndexChanged.connect(lambda: self.size_count(self.choose_vq.currentIndex(), 0, duration, num))  # 画质选择信号触发，实时修改大小显示
@@ -520,9 +516,13 @@ class VideoDownloader(QtWidgets.QMainWindow):
         h_box_1 = QtWidgets.QHBoxLayout(box2)
         dl_btn = QtWidgets.QPushButton(box2)
         dl_btn.setObjectName("dl_btn")
+        dl_btn.setFixedSize(20, 20)
+        dl_btn.setCursor(QtCore.Qt.PointingHandCursor)
         dl_btn.clicked.connect(lambda: self.download(num, self.choose_vq.currentIndex(), duration))  # 设置下载按钮触发
         delete_btn = QtWidgets.QPushButton(box2)
         delete_btn.setObjectName("delete_btn")
+        delete_btn.setFixedSize(20, 20)
+        delete_btn.setCursor(QtCore.Qt.PointingHandCursor)
         delete_btn.clicked.connect(lambda: self.delete(num))  # 删除队列触发
         h_box_1.addWidget(dl_btn)
         h_box_1.addWidget(delete_btn)
@@ -556,7 +556,8 @@ class VideoDownloader(QtWidgets.QMainWindow):
         self.download_filename = self.video_info[num-1][1]
 
         # 创建视频下载线程
-        download_thread = DownloadThread(video_res, video_res.headers['Content-Length'], open(f"{self.filepath}/video.flv", 'wb'), 10240, 0)
+        print("下载视频")
+        download_thread = DownloadThread(video_res, video_res.headers['Content-Length'], open(f"{self.filepath}/video.flv", 'wb'), 1024, 0)
         download_thread.download_proess_signal.connect(self.set_prosess)
         download_thread.start()
 
@@ -568,11 +569,13 @@ class VideoDownloader(QtWidgets.QMainWindow):
         audio_res = self.sess.get_audio(self.audio[num-1][aq][1], audio_size)
 
         # 创建音频下载线程
-        download_thread = DownloadThread(audio_res, audio_res.headers['Content-Length'], open(f"{self.filepath}/audio.mp3", 'wb'), 10240, 1)
+        print("下载音频")
+        download_thread = DownloadThread(audio_res, audio_res.headers['Content-Length'], open(f"{self.filepath}/audio.mp3", 'wb'), 1024, 1)
         download_thread.download_proess_signal.connect(self.set_prosess)
         download_thread.start()
 
         if download_thread.isFinished():  # 判断是否下载完成
+            print("合并视频")
             self.merge_file()  # 合并音视频
             self.set_prosess(100)  # 刷新进度
 
@@ -729,19 +732,18 @@ class DownloadThread(QtCore.QThread):  # 下载线程
         super(DownloadThread, self).__init__()
         self.filesize = filesize
         self.fileobj = fileobj
-        self.buffer = buffer
-        self.res = res
-        self.state = state
+        self.buffer = buffer  # 每次写入大小
+        self.res = res  # 音视频流
+        self.state = state  # 判断音频或视频 0为视频 1为音频
 
     def run(self):
         try:
-            rsp = self.res  # 流下载模式
             offset = 0
-            for chunk in rsp.iter_content(chunk_size=self.buffer):
+            for chunk in self.res.iter_content(chunk_size=self.buffer):
                 if not chunk: break
                 self.fileobj.seek(offset)  # 设置指针位置
                 self.fileobj.write(chunk)  # 写入文件
-                offset = offset + len(chunk)
+                offset += len(chunk)
                 # print(f'offset:{offset}')
                 if self.state == 0:
                     proess = offset / int(self.filesize) * 90  # 90%为视频下载完成
