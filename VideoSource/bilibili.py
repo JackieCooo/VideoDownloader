@@ -1,15 +1,15 @@
+from you_get.extractors import bilibili
 import requests
 import re
-import os
 
 
-class bilibiliVideo(object):
+class Bilibili(object):
 
     def __init__(self):
-        self.header1 = {
+        self.header = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:6.0) Gecko/20100101 Firefox/6.0'
         }
-        self.header2 = {
+        self.download_header = {
             'Connection': 'keep-alive',
             'Pragma': 'no-cache',
             'Cache-Control': 'no-cache',
@@ -23,92 +23,32 @@ class bilibiliVideo(object):
             'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
             # 'Range': f'bytes=0-{self.size}',  # 视频长度
         }
-        self.url = None
-        # self.video_url = []  # 112:1080p+ 80:1080p 64:720p 32:480p 16:360p
-        # self.audio_url = []  # 30280: 160kbps 30216: 80kbps
-        self.filename = None
-        # self.size = None
-        # self.vq = 0  # 视频质量: 0:最高画质优先 1:1080p+ 2:1080p 3:720p 4:480p 5:360p
-        # self.aq = 0  # 音频质量: 0:最高音质优先 1:160kbps 2:80kbps
-        self.duration = None
 
-    def get_video(self, url, size):
-        self.header2.update({'Range': f'bytes=0-{size}'})
-        res = requests.get(url=url, headers=self.header2, stream=True)
+    def get_video(self, video_url, download_url, req_range):
+        temp = {'Referer': f'{video_url}', 'Range': f'bytes=0-{req_range}'}
+        self.download_header.update(temp)
+        res = requests.get(url=download_url, headers=self.download_header, stream=True).content
         return res
-        # print(res.headers)
-        # with open('./temp/video.flv', 'wb') as f:
-        #     for data in res.iter_content(1024):
-        #         f.write(data)
-
-    def get_audio(self, url, size):
-        self.header2.update({'Range': f'bytes=0-{size}'})
-        res = requests.get(url=url, headers=self.header2, stream=True)
-        return res
-        # with open('./temp/audio.mp3', 'wb') as f:
-        #     for data in res.iter_content(1024):
-        #         f.write(data)
 
     def get_info(self, url):
-        video_url = []
-        audio_url = []
-        self.url = url  # 视频地址
-        self.header2.update({'Referer': f'{self.url}'})  # 插入Referer
-        response = requests.get(url=self.url, headers=self.header1).text  # 类型为str
-        # print(response)
-        res = eval(re.search(r'(?<=window.__playinfo__=).*?(?=</script><script>)', response).group())["data"]["dash"]  # 类型为dict
-        # print(res)
-        pre_id = 0
-        now_id = 0
-        for i in res["video"]:
-            temp = [i["id"], i["baseUrl"], i["bandwidth"]]
-            now_id = i["id"]
-            if now_id != pre_id:
-                video_url.append(temp)
-                pre_id = now_id
-            else:
-                continue
-        # print(self.video_url)
-        pre_id = 0
-        now_id = 0
-        for i in res["audio"]:
-            temp = [i["id"], i["baseUrl"], i["bandwidth"]]
-            now_id = i["id"]
-            if now_id != pre_id:
-                audio_url.append(temp)
-                pre_id = now_id
-            else:
-                continue
-        # print(self.audio_url)
-        self.filename = re.search(r'(?<="title":").*?(?=",)', response).group(0)  # 获取名字
-        # print(self.filename)
-        self.duration = int(re.search(r'(?<="timelength":).*?(?=,)', response).group())  # 获取时长
+        video_urls = []
+
+        # 获取缩略图
+        response = requests.get(url=url, headers=self.header).text  # 类型为str
+        duration = int(re.search(r'(?<="timelength":).*?(?=,)', response).group())  # 获取时长
         pic_url = re.search(r'(?<=itemprop="image" content=").*?(?=">)', response).group(0)
-        pic = requests.get(url=pic_url, headers=self.header1).content  # 获取封面图
+        pic = requests.get(url=pic_url, headers=self.header).content  # 获取封面图
         with open('./temp/pic.jpg', 'wb') as f:
             f.write(pic)
-        return self.filename, self.duration, video_url, audio_url
 
-    def merge_file(self):
-        video_path = "../temp/video.flv"
-        audio_path = "../temp/audio.mp3"
-        os.system("ffmpeg -i " + video_path + " -i " + audio_path + " -codec copy ../downloads/final.mp4")
-        os.rename("../downloads/final.mp4", f"../downloads/{self.filename}.mp4")
-        os.remove("../temp/video.flv")
-        os.remove("../temp/audio.mp3")
-
+        info = eval(bilibili.download(url, json_output=True))
+        name = info['title']
+        for i in info['streams'].values():
+            q = i['quality'][3:] + ' ' + i['container']
+            temp = [url, q, i['size'], i['src'][0]]  # 分别为视频原地址，视频质量，大小，下载地址
+            video_urls.append(temp)
+        return name, duration, video_urls
 
 if __name__ == '__main__':
-    app = bilibiliVideo()
-    name, duration, video_url, audio_url = app.get_info("https://www.bilibili.com/video/BV13i4y137ox")
-    video_size = int((duration / 1000) * video_url[0][2] / 8)
-    res = app.get_video(video_url[0][1], video_size)
-    with open("../temp/video.flv", "wb") as f:
-        for i in res.iter_content(1024):
-            f.write(i)
-    audio_size = int((duration / 1000) * audio_url[0][2] / 8)
-    res = app.get_audio(audio_url[0][1], audio_size)
-    with open("../temp/audio.mp3", "wb") as f:
-        for i in res.iter_content(1024):
-            f.write(i)
-    app.merge_file()
+    app = Bilibili()
+    app.get_info("https://www.bilibili.com/video/BV1zV411k7pr")

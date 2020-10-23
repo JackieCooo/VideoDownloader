@@ -13,8 +13,7 @@ class VideoDownloader(QtWidgets.QMainWindow):
         super(VideoDownloader, self).__init__()
         self.engine_list = ['b站', '腾讯视频']
         self.sess = None
-        self.video = []
-        self.audio = []
+        self.video_urls = None
         self.num = 0  # 记录表格行数，便于动态调整
         self.video_info = []
         self.m_flag = False
@@ -415,7 +414,7 @@ class VideoDownloader(QtWidgets.QMainWindow):
     def engine_switch(self):
         print(f'当前搜索引擎：{self.engine.currentIndex()}')
         if self.engine.currentIndex() == 0:
-            self.sess = bilibili.bilibiliVideo()
+            self.sess = bilibili.Bilibili()
         elif self.engine.currentIndex() == 1:
             self.sess = tencent.Tencent()
         elif self.engine.currentIndex() == 2:
@@ -430,9 +429,8 @@ class VideoDownloader(QtWidgets.QMainWindow):
     def search(self, url):
         self.num += 1
 
-        filename, duration, temp1, temp2 = self.sess.get_info(url)
-        self.video.append(temp1)
-        self.audio.append(temp2)
+        filename, duration, self.video_urls = self.sess.get_info(url)
+        print(self.video_urls)
 
         # 计算时长
         minute = int(duration / 60000)
@@ -443,16 +441,15 @@ class VideoDownloader(QtWidgets.QMainWindow):
             time = f"{minute}:{second}"
 
         # 保存视频信息
-        temp3 = [self.set_pic(), filename, time, self.set_quality_select(duration, self.num), self.set_op_btn(self.num, duration)]
-        self.video_info.append(temp3)
+        temp = [self.video_urls, self.set_pic(), filename, time, self.set_quality_select(self.num), self.set_op_btn(self.num)]  # 分别为视频流信息，缩略图对象，视频名，时长，画质选择器对象，操作按钮对象
+        self.video_info.append(temp)
 
         self.show_result()  # 展示视频信息
 
-        self.size_count(self.choose_vq.currentIndex(), 0, duration, self.num)  # 刷新下载文件大小
+        self.set_size(self.choose_vq.currentIndex(), self.num)  # 刷新下载文件大小
 
-    def size_count(self, vq, aq, duration, num):
-        size = (duration / 1000) * (self.video[num-1][vq][2] + self.audio[num-1][aq][2]) / 8000000
-        size = str(round(size, 2)) + 'M'
+    def set_size(self, index, num):
+        size = str(self.video_info[0][num-1][index][2] / 1024 / 1024)[:5] + "M"
         item = QtWidgets.QTableWidgetItem(size)
         item.setTextAlignment(QtCore.Qt.AlignCenter)
         self.table.setItem(num-1, 3, item)
@@ -469,7 +466,7 @@ class VideoDownloader(QtWidgets.QMainWindow):
         front.setScaledContents(True)
         return front
 
-    def set_quality_select(self, duration, num):
+    def set_quality_select(self, num):
         # 设置画质选择器
         box1 = QtWidgets.QWidget()
         v_box_1 = QtWidgets.QVBoxLayout(box1)
@@ -478,26 +475,14 @@ class VideoDownloader(QtWidgets.QMainWindow):
         self.choose_vq = QtWidgets.QComboBox(box1)
         self.choose_vq.setObjectName("choose_vq")
         self.choose_vq.setFixedHeight(36)
-        temp = []
-        for i in self.video[num-1]:
-            if i[0] == 112:
-                temp.append("1080p+")
-            elif i[0] == 80:
-                temp.append("1080p")
-            elif i[0] == 64:
-                temp.append("720p")
-            elif i[0] == 32:
-                temp.append("480p")
-            elif i[0] == 16:
-                temp.append("360p")
         self.choose_vq.setFrame(True)
         text = QtWidgets.QLineEdit()  # 设置combobox字体
         text.setReadOnly(True)
         text.setAlignment(QtCore.Qt.AlignCenter)
         self.choose_vq.setLineEdit(text)
         combobox_drop_down = QtWidgets.QListWidget()  # 设置combobox下拉菜单字体
-        for i in temp:
-            item = QtWidgets.QListWidgetItem(i)
+        for i in self.video_urls:
+            item = QtWidgets.QListWidgetItem(i[1])
             item.setTextAlignment(QtCore.Qt.AlignCenter)
             combobox_drop_down.addItem(item)
         self.choose_vq.setModel(combobox_drop_down.model())
@@ -505,12 +490,11 @@ class VideoDownloader(QtWidgets.QMainWindow):
         font = QtGui.QFont("微软雅黑", 10)
         self.choose_vq.setFont(font)
         self.choose_vq.setCursor(QtCore.Qt.PointingHandCursor)
-        self.choose_vq.currentIndexChanged.connect(lambda: self.size_count(self.choose_vq.currentIndex(), 0, duration, num))  # 画质选择信号触发，实时修改大小显示
+        self.choose_vq.currentIndexChanged.connect(lambda: self.set_size(self.choose_vq.currentIndex(), num))  # 画质选择信号触发，实时修改大小显示
         v_box_1.addWidget(self.choose_vq)
-        del temp
         return box1
 
-    def set_op_btn(self, num, duration):
+    def set_op_btn(self, num):
         # 设置开始下载按钮
         box2 = QtWidgets.QWidget()
         h_box_1 = QtWidgets.QHBoxLayout(box2)
@@ -518,7 +502,7 @@ class VideoDownloader(QtWidgets.QMainWindow):
         dl_btn.setObjectName("dl_btn")
         dl_btn.setFixedSize(20, 20)
         dl_btn.setCursor(QtCore.Qt.PointingHandCursor)
-        dl_btn.clicked.connect(lambda: self.download(num, self.choose_vq.currentIndex(), duration))  # 设置下载按钮触发
+        dl_btn.clicked.connect(lambda: self.download(num, self.choose_vq.currentIndex()))  # 设置下载按钮触发
         delete_btn = QtWidgets.QPushButton(box2)
         delete_btn.setObjectName("delete_btn")
         delete_btn.setFixedSize(20, 20)
@@ -535,61 +519,35 @@ class VideoDownloader(QtWidgets.QMainWindow):
         self.table.insertRow(self.table.rowCount())
         row = self.table.rowCount() - 1
         self.table.setRowHeight(row, 124)
-        self.table.setCellWidget(row, 0, self.video_info[row][0])
-        item = QtWidgets.QTableWidgetItem(self.video_info[row][1])
-        self.table.setItem(row, 1, item)
+        self.table.setCellWidget(row, 0, self.video_info[row][1])
         item = QtWidgets.QTableWidgetItem(self.video_info[row][2])
+        self.table.setItem(row, 1, item)
+        item = QtWidgets.QTableWidgetItem(self.video_info[row][3])
         item.setTextAlignment(QtCore.Qt.AlignCenter)
         self.table.setItem(row, 2, item)
-        self.table.setCellWidget(row, 4, self.video_info[row][3])
-        self.table.setCellWidget(row, 5, self.video_info[row][4])
+        self.table.setCellWidget(row, 4, self.video_info[row][4])
+        self.table.setCellWidget(row, 5, self.video_info[row][5])
 
-    def download(self, num, vq, duration):
-        print("正在下载")
+    def download(self, num, index):
+        size = self.video_info[num - 1][0][index][2]
+
         item = QtWidgets.QListWidgetItem()
         item.setSizeHint(QtCore.QSize(950, 120))
         self.list.addItem(item)
-        delegate = ListDelegate(self.video_info[num-1][1])
+        delegate = ListDelegate(self.video_info[num-1][1], size)
         self.list.setItemDelegateForRow(num-1, delegate)
-        video_size = int((duration / 1000) * self.video[num-1][vq][2] / 8)
-        video_res = self.sess.get_video(self.video[num-1][vq][1], video_size)
-        self.download_filename = self.video_info[num-1][1]
+
+        res = self.sess.get_video(self.video_info[num-1][0][index][0], self.video_info[num-1][0][index][3], size)
 
         # 创建视频下载线程
-        print("下载视频")
-        download_thread = DownloadThread(video_res, video_res.headers['Content-Length'], open(f"{self.filepath}/video.flv", 'wb'), 1024, 0)
+        print("正在下载")
+        download_thread = DownloadThread(res, open("./downloads/video.flv", "wb"), size)
         download_thread.download_proess_signal.connect(self.set_prosess)
         download_thread.start()
-
-        if self.h_aq.isChecked():
-            aq = 0
-        else:
-            aq = 1
-        audio_size = int((duration / 1000) * self.audio[num-1][aq][2] / 8)
-        audio_res = self.sess.get_audio(self.audio[num-1][aq][1], audio_size)
-
-        # 创建音频下载线程
-        print("下载音频")
-        download_thread = DownloadThread(audio_res, audio_res.headers['Content-Length'], open(f"{self.filepath}/audio.mp3", 'wb'), 1024, 1)
-        download_thread.download_proess_signal.connect(self.set_prosess)
-        download_thread.start()
-
-        if download_thread.isFinished():  # 判断是否下载完成
-            print("合并视频")
-            self.merge_file()  # 合并音视频
-            self.set_prosess(100)  # 刷新进度
 
     def set_prosess(self, val):
-        delegate = ListDelegate(self.download_filename, val)
+        delegate = ListDelegate(self.video_info, val)
         self.list.setItemDelegateForRow(0, delegate)
-
-    def merge_file(self):
-        video_path = "./temp/video.flv"
-        audio_path = "./temp/audio.mp3"
-        os.system("ffmpeg -i " + video_path + " -i " + audio_path + " -codec copy ./downloads/final.mp4")
-        os.rename("./downloads/final.mp4", f"./downloads/{self.download_filename}.mp4")
-        os.remove("./temp/video.flv")
-        os.remove("./temp/audio.mp3")
 
     def path_change(self):
         self.filepath = QtWidgets.QFileDialog.getExistingDirectory(caption='选取文件夹', directory='./') + '/'
@@ -630,7 +588,7 @@ class VideoDownloader(QtWidgets.QMainWindow):
         self.label3.setText(QtWidgets.QApplication.translate("VideoDownloader", "关于"))
         self.label4.setText(QtWidgets.QApplication.translate("VideoDownloader", "主题颜色"))
         self.label5.setText(QtWidgets.QApplication.translate("VideoDownloader", "语言"))
-        self.label6.setText(QtWidgets.QApplication.translate("VideoDownloader", "下载线程数"))
+        self.label6.setText(QtWidgets.QApplication.translate("VideoDownloader", "下载线程数（尚未加入）"))
         self.label7.setText(QtWidgets.QApplication.translate("VideoDownloader", "软件简介"))
         self.label8.setText(QtWidgets.QApplication.translate("VideoDownloader", "赞助方式"))
         self.label9.setText(QtWidgets.QApplication.translate("VideoDownloader", "软件版本: ver 1.0\n该软件为开源软件项目，并会持续更新\n开源地址:https://github.com/JackieCooo/VideoDownloader"))
@@ -641,6 +599,7 @@ class VideoDownloader(QtWidgets.QMainWindow):
         self.table.setHorizontalHeaderLabels(["", QtWidgets.QApplication.translate("VideoDownloader", "视频名"), QtWidgets.QApplication.translate("VideoDownloader", "时长"), QtWidgets.QApplication.translate("VideoDownloader", "大小"), QtWidgets.QApplication.translate("VideoDownloader", "画质"), ""])
         self.search_box.setPlaceholderText(QtWidgets.QApplication.translate("VideoDownloader", "输入视频地址"))
         self.engine.setItemText(0, QtWidgets.QApplication.translate("VideoDownloader", "b站"))
+        self.engine.setItemText(1, QtWidgets.QApplication.translate("VideoDownloader", "腾讯视频"))
         self.blue_btn.setText(QtWidgets.QApplication.translate("VideoDownloader", "胖次蓝"))
         self.red_btn.setText(QtWidgets.QApplication.translate("VideoDownloader", "姨妈红"))
         self.yellow_btn.setText(QtWidgets.QApplication.translate("VideoDownloader", "咸蛋黄"))
@@ -681,34 +640,31 @@ class VideoDownloader(QtWidgets.QMainWindow):
 
 class ListDelegate(QtWidgets.QStyledItemDelegate):
 
-    def __init__(self, name, val=0):
+    def __init__(self, name, size, val=0):
         super(ListDelegate, self).__init__()
         self.name = name
         self.val = val
+        self.size = size
 
     def paint(self, painter, option, index):
         # 绘制缩略图
         img = Image.open("./temp/pic.jpg")
-        painter.drawPixmap(QtCore.QRect(5, 5, 195, 110), QtGui.QPixmap("./temp/pic.jpg"), QtCore.QRect(0, 0, img.width, img.height))
+        painter.drawPixmap(QtCore.QRect(20, 20, 142, 80), QtGui.QPixmap("./temp/pic.jpg"), QtCore.QRect(0, 0, img.width, img.height))
 
         # 绘制视频名
-        font = painter.font()
-        font.setPixelSize(18)
-        font.setFamily('黑体')
-        painter.setFont(font)
-        painter.drawText(QtCore.QRect(210, 10, 725, 40), 0, self.name)
+        painter.setFont(QtGui.QFont('微软雅黑', 18))
+        painter.drawText(QtCore.QRect(190, 10, 730, 40), 0, self.name)
 
         # 绘制下载信息
-        font = painter.font()
-        font.setPixelSize(15)
-        font.setFamily('微软雅黑')
-        info = "info, info, info"
+        painter.setFont(QtGui.QFont('微软雅黑', 10))
+        current_size = str(self.val * self.size / 1024 ** 2)[:4]
+        info = f"{current_size}MB of {self.size}MB"
         painter.setPen(QtGui.QColor(128, 128, 128))
-        painter.drawText(QtCore.QRect(210, 60, 725, 90), 0, info)
+        painter.drawText(QtCore.QRect(190, 70, 730, 90), 0, info)
 
         # 绘制进度条
         style = QtWidgets.QStyleOptionProgressBar()
-        style.rect = QtCore.QRect(210, 85, 725, 15)
+        style.rect = QtCore.QRect(190, 95, 730, 10)
         style.minimum = 0
         style.maximum = 100
         style.progress = self.val
@@ -716,39 +672,31 @@ class ListDelegate(QtWidgets.QStyledItemDelegate):
 
         if option.state & QtWidgets.QStyle.State_MouseOver:
             rect = option.rect
-            painter.setBrush(QtGui.QColor(0, 0, 64, 32))
-            painter.drawRect(rect.topLeft().x(), rect.topLeft().y(), rect.width(), rect.height())
-
-        if option.state & QtWidgets.QStyle.State_Selected:
-            rect = option.rect
-            painter.setBrush(QtGui.QColor(0, 0, 64, 64))
-            painter.drawRect(rect.topLeft().x(), rect.topLeft().y(), rect.width(), rect.height())
+            painter.setPen(QtGui.QColor(0, 0, 0, 0))
+            painter.setBrush(QtGui.QColor(64, 64, 64, 32))
+            painter.drawRect(rect)
 
 
 class DownloadThread(QtCore.QThread):  # 下载线程
     download_proess_signal = QtCore.pyqtSignal(int)  # 创建信号
 
-    def __init__(self, res, filesize, fileobj, buffer, state):
+    def __init__(self, res, fileobj, size, buffer=1024):
         super(DownloadThread, self).__init__()
-        self.filesize = filesize
+        self.res = res
+        self.buffer = buffer
         self.fileobj = fileobj
-        self.buffer = buffer  # 每次写入大小
-        self.res = res  # 音视频流
-        self.state = state  # 判断音频或视频 0为视频 1为音频
+        self.size = size
 
     def run(self):
         try:
             offset = 0
-            for chunk in self.res.iter_content(chunk_size=self.buffer):
+            for chunk in self.obj.iter_content(chunk_size=self.buffer):
                 if not chunk: break
                 self.fileobj.seek(offset)  # 设置指针位置
                 self.fileobj.write(chunk)  # 写入文件
                 offset += len(chunk)
                 # print(f'offset:{offset}')
-                if self.state == 0:
-                    proess = offset / int(self.filesize) * 90  # 90%为视频下载完成
-                elif self.state == 1:
-                    proess = offset / int(self.filesize) * 5 + 90  # 95%为音频下载完成
+                proess = offset / int(self.size) * 100  # 计算下载进度
                 # print(f'proess:{proess}')
                 self.download_proess_signal.emit(int(proess))  # 发送信号
 
