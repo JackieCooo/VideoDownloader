@@ -534,7 +534,7 @@ class VideoDownloader(QtWidgets.QMainWindow):
         item = QtWidgets.QListWidgetItem()
         item.setSizeHint(QtCore.QSize(950, 120))
         self.list.addItem(item)
-        delegate = ListDelegate(self.video_info[num-1][1], size)
+        delegate = ListDelegate(self.video_info[num-1][2], size)
         self.list.setItemDelegateForRow(num-1, delegate)
 
         res = self.sess.get_video(self.video_info[num-1][0][index][0], self.video_info[num-1][0][index][3], size)
@@ -546,7 +546,9 @@ class VideoDownloader(QtWidgets.QMainWindow):
         download_thread.start()
 
     def set_prosess(self, val):
-        delegate = ListDelegate(self.video_info, val)
+        name = self.video_info[0][2]
+        size = self.video_info[0][0][0][2] / 1024 ** 2
+        delegate = ListDelegate(name, size, val)
         self.list.setItemDelegateForRow(0, delegate)
 
     def path_change(self):
@@ -644,7 +646,7 @@ class ListDelegate(QtWidgets.QStyledItemDelegate):
         super(ListDelegate, self).__init__()
         self.name = name
         self.val = val
-        self.size = size
+        self.size = round(size / 1024 ** 2, 2)
 
     def paint(self, painter, option, index):
         # 绘制缩略图
@@ -652,7 +654,7 @@ class ListDelegate(QtWidgets.QStyledItemDelegate):
         painter.drawPixmap(QtCore.QRect(20, 20, 142, 80), QtGui.QPixmap("./temp/pic.jpg"), QtCore.QRect(0, 0, img.width, img.height))
 
         # 绘制视频名
-        painter.setFont(QtGui.QFont('微软雅黑', 18))
+        painter.setFont(QtGui.QFont('微软雅黑', 15))
         painter.drawText(QtCore.QRect(190, 10, 730, 40), 0, self.name)
 
         # 绘制下载信息
