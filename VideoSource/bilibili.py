@@ -1,6 +1,4 @@
-from you_get.extractors import bilibili
-import requests
-import re
+import requests, re, subprocess, json
 
 
 class Bilibili(object):
@@ -9,26 +7,6 @@ class Bilibili(object):
         self.header = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:6.0) Gecko/20100101 Firefox/6.0'
         }
-        self.download_header = {
-            'Connection': 'keep-alive',
-            'Pragma': 'no-cache',
-            'Cache-Control': 'no-cache',
-            'Origin': 'https://www.bilibili.com',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36',
-            'Accept': '*/*',
-            'Sec-Fetch-Site': 'cross-site',
-            'Sec-Fetch-Mode': 'cors',
-            # 'Referer': f'{self.url}',  # 视频地址
-            'Accept-Encoding': 'identity',
-            'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
-            # 'Range': f'bytes=0-{self.size}',  # 视频长度
-        }
-
-    def get_video(self, video_url, download_url, req_range):
-        temp = {'Referer': f'{video_url}', 'Range': f'bytes=0-{req_range}'}
-        self.download_header.update(temp)
-        res = requests.get(url=download_url, headers=self.download_header, stream=True).content
-        return res
 
     def get_info(self, url):
         video_urls = []
@@ -38,15 +16,24 @@ class Bilibili(object):
         duration = int(re.search(r'(?<="timelength":).*?(?=,)', response).group())  # 获取时长
         pic_url = re.search(r'(?<=itemprop="image" content=").*?(?=">)', response).group(0)
         pic = requests.get(url=pic_url, headers=self.header).content  # 获取封面图
-        with open('./temp/pic.jpg', 'wb') as f:
-            f.write(pic)
+        # with open('./temp/pic.jpg', 'wb') as f:  # 包内测试时注释
+        #     f.write(pic)
 
-        info = eval(bilibili.download(url, json_output=True))
+        arg = f"you-get --json {url}"
+
+        p = subprocess.Popen(arg, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = p.communicate()
+        info = json.loads(stdout)
+        # print(stdout)
+        # print(stderr)
+        # print(type(info))
+
         name = info['title']
-        for i in info['streams'].values():
-            q = i['quality'][3:] + ' ' + i['container']
-            temp = [url, q, i['size'], i['src'][0]]  # 分别为视频原地址，视频质量，大小，下载地址
+        for i, j in info['streams'].items():
+            q = j['quality'][3:] + ' ' + j['container']
+            temp = [q, j['size'], j['src'][0], i]  # 分别为视频质量，大小，下载地址，stream_id
             video_urls.append(temp)
+        # print(video_urls)
         return name, duration, video_urls
 
 if __name__ == '__main__':

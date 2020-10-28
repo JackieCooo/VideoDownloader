@@ -4,6 +4,7 @@ from PyQt5 import QtWidgets, QtGui, QtCore
 from VideoSource import bilibili, tencent
 from PIL import Image
 import ctypes
+import re
 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("myappid")
 
 
@@ -430,7 +431,7 @@ class VideoDownloader(QtWidgets.QMainWindow):
         self.num += 1
 
         filename, duration, self.video_urls = self.sess.get_info(url)
-        print(self.video_urls)
+        # print(self.video_urls)
 
         # 计算时长
         minute = int(duration / 60000)
@@ -441,7 +442,7 @@ class VideoDownloader(QtWidgets.QMainWindow):
             time = f"{minute}:{second}"
 
         # 保存视频信息
-        temp = [self.video_urls, self.set_pic(), filename, time, self.set_quality_select(self.num), self.set_op_btn(self.num)]  # 分别为视频流信息，缩略图对象，视频名，时长，画质选择器对象，操作按钮对象
+        temp = [url, self.video_urls, self.set_pic(), filename, time, self.set_quality_select(self.num), self.set_op_btn(self.num)]  # 分别为视频原地址，视频流信息，缩略图对象，视频名，时长，画质选择器对象，操作按钮对象
         self.video_info.append(temp)
 
         self.show_result()  # 展示视频信息
@@ -449,7 +450,7 @@ class VideoDownloader(QtWidgets.QMainWindow):
         self.set_size(self.choose_vq.currentIndex(), self.num)  # 刷新下载文件大小
 
     def set_size(self, index, num):
-        size = str(self.video_info[0][num-1][index][2] / 1024 / 1024)[:5] + "M"
+        size = str(self.video_info[num-1][1][index][1] / 1024 / 1024)[:5] + "M"
         item = QtWidgets.QTableWidgetItem(size)
         item.setTextAlignment(QtCore.Qt.AlignCenter)
         self.table.setItem(num-1, 3, item)
@@ -482,7 +483,7 @@ class VideoDownloader(QtWidgets.QMainWindow):
         self.choose_vq.setLineEdit(text)
         combobox_drop_down = QtWidgets.QListWidget()  # 设置combobox下拉菜单字体
         for i in self.video_urls:
-            item = QtWidgets.QListWidgetItem(i[1])
+            item = QtWidgets.QListWidgetItem(i[0])
             item.setTextAlignment(QtCore.Qt.AlignCenter)
             combobox_drop_down.addItem(item)
         self.choose_vq.setModel(combobox_drop_down.model())
@@ -519,37 +520,38 @@ class VideoDownloader(QtWidgets.QMainWindow):
         self.table.insertRow(self.table.rowCount())
         row = self.table.rowCount() - 1
         self.table.setRowHeight(row, 124)
-        self.table.setCellWidget(row, 0, self.video_info[row][1])
-        item = QtWidgets.QTableWidgetItem(self.video_info[row][2])
-        self.table.setItem(row, 1, item)
+        self.table.setCellWidget(row, 0, self.video_info[row][2])
         item = QtWidgets.QTableWidgetItem(self.video_info[row][3])
+        self.table.setItem(row, 1, item)
+        item = QtWidgets.QTableWidgetItem(self.video_info[row][4])
         item.setTextAlignment(QtCore.Qt.AlignCenter)
         self.table.setItem(row, 2, item)
-        self.table.setCellWidget(row, 4, self.video_info[row][4])
-        self.table.setCellWidget(row, 5, self.video_info[row][5])
+        self.table.setCellWidget(row, 4, self.video_info[row][5])
+        self.table.setCellWidget(row, 5, self.video_info[row][6])
 
     def download(self, num, index):
-        size = self.video_info[num - 1][0][index][2]
-
         item = QtWidgets.QListWidgetItem()
         item.setSizeHint(QtCore.QSize(950, 120))
         self.list.addItem(item)
-        delegate = ListDelegate(self.video_info[num-1][2], size)
+        delegate = ListDelegate(self.video_info[num-1][3], self.video_info[num - 1][1][index][1])
         self.list.setItemDelegateForRow(num-1, delegate)
 
-        res = self.sess.get_video(self.video_info[num-1][0][index][0], self.video_info[num-1][0][index][3], size)
+        self.p = QtCore.QProcess(self)
+        self.p.readyReadStandardOutput.connect(self.read_output)
+        self.p.start(f"you-get --format={self.video_info[num - 1][1][index][3]} -f --no-caption {self.video_info[num-1][0]}")
 
-        # 创建视频下载线程
-        print("正在下载")
-        download_thread = DownloadThread(res, open("./downloads/video.flv", "wb"), size)
-        download_thread.download_proess_signal.connect(self.set_prosess)
-        download_thread.start()
-
-    def set_prosess(self, val):
-        name = self.video_info[0][2]
-        size = self.video_info[0][0][0][2] / 1024 ** 2
-        delegate = ListDelegate(name, size, val)
-        self.list.setItemDelegateForRow(0, delegate)
+    def read_output(self):
+        res = str(self.p.readAllStandardOutput())
+        # print(res)
+        current_size = re.search(r"(?<=%).*?(?=/)", res)
+        speed = re.search(r"(?<=] {4}).*?(?=')", res)
+        if current_size is not None and speed is not None:
+            val1 = float(current_size.group(0)[3:])
+            val2 = speed.group(0)
+            delegate = ListDelegate(self.video_info[num-1][3], self.video_info[num - 1][1][index][1], val1, val2)
+            self.list.setItemDelegateForRow(0, delegate)
+            # print(current_size.group(0)[3:])
+            # print(speed.group(0))
 
     def path_change(self):
         self.filepath = QtWidgets.QFileDialog.getExistingDirectory(caption='选取文件夹', directory='./') + '/'
@@ -642,11 +644,12 @@ class VideoDownloader(QtWidgets.QMainWindow):
 
 class ListDelegate(QtWidgets.QStyledItemDelegate):
 
-    def __init__(self, name, size, val=0):
+    def __init__(self, name, size=0.0, val=0.0, speed="0 B/s"):
         super(ListDelegate, self).__init__()
         self.name = name
-        self.val = val
-        self.size = round(size / 1024 ** 2, 2)
+        self.val = val  # 已下载文件的大小
+        self.speed = speed  # 下载速度大小
+        self.size = size  # 文件总大小
 
     def paint(self, painter, option, index):
         # 绘制缩略图
@@ -659,8 +662,7 @@ class ListDelegate(QtWidgets.QStyledItemDelegate):
 
         # 绘制下载信息
         painter.setFont(QtGui.QFont('微软雅黑', 10))
-        current_size = str(self.val * self.size / 1024 ** 2)[:4]
-        info = f"{current_size}MB of {self.size}MB"
+        info = f"{self.val}MB of {self.size}MB - {self.speed}"
         painter.setPen(QtGui.QColor(128, 128, 128))
         painter.drawText(QtCore.QRect(190, 70, 730, 90), 0, info)
 
@@ -669,45 +671,18 @@ class ListDelegate(QtWidgets.QStyledItemDelegate):
         style.rect = QtCore.QRect(190, 95, 730, 10)
         style.minimum = 0
         style.maximum = 100
-        style.progress = self.val
-        QtWidgets.QApplication.style().drawControl(QtWidgets.QStyle.CE_ProgressBar, style, painter)
+        if self.size == 0.0:
+            style.progress = 0
+        else:
+            style.progress = int(self.val / self.size * 100)
+        # QtWidgets.QApplication.style().drawControl(QtWidgets.QStyle.CE_ProgressBar, style, painter)
+        CustomProgressBarStyle().drawControl(QtWidgets.QStyle.CE_ProgressBar, style, painter)
 
         if option.state & QtWidgets.QStyle.State_MouseOver:
             rect = option.rect
             painter.setPen(QtGui.QColor(0, 0, 0, 0))
             painter.setBrush(QtGui.QColor(64, 64, 64, 32))
             painter.drawRect(rect)
-
-
-class DownloadThread(QtCore.QThread):  # 下载线程
-    download_proess_signal = QtCore.pyqtSignal(int)  # 创建信号
-
-    def __init__(self, res, fileobj, size, buffer=1024):
-        super(DownloadThread, self).__init__()
-        self.res = res
-        self.buffer = buffer
-        self.fileobj = fileobj
-        self.size = size
-
-    def run(self):
-        try:
-            offset = 0
-            for chunk in self.obj.iter_content(chunk_size=self.buffer):
-                if not chunk: break
-                self.fileobj.seek(offset)  # 设置指针位置
-                self.fileobj.write(chunk)  # 写入文件
-                offset += len(chunk)
-                # print(f'offset:{offset}')
-                proess = offset / int(self.size) * 100  # 计算下载进度
-                # print(f'proess:{proess}')
-                self.download_proess_signal.emit(int(proess))  # 发送信号
-
-            self.fileobj.close()  # 关闭文件
-            self.exit(0)  # 关闭线程
-            print("下载完成")
-
-        except Exception as e:
-            print(e)
 
 
 class CustomBtn(QtWidgets.QAbstractButton):
@@ -841,6 +816,37 @@ class CustomWidget(QtWidgets.QWidget):
 
     def mouseReleaseEvent(self, event):
         self.m_flag = False
+
+
+class CustomProgressBarStyle(QtWidgets.QCommonStyle):
+
+    def __init__(self):
+        super(CustomProgressBarStyle, self).__init__()
+
+    def drawControl(self, element, opt, p, widget = ...):
+        if element == QtWidgets.QStyle.CE_ProgressBar:
+            self.proxy().drawControl(QtWidgets.QStyle.CE_ProgressBarGroove, opt, p, widget)
+            self.proxy().drawControl(QtWidgets.QStyle.CE_ProgressBarContents, opt, p, widget)
+
+        if element == QtWidgets.QStyle.CE_ProgressBarContents:
+            p.setRenderHint(QtGui.QPainter.Antialiasing)
+            p.setBrush(QtGui.QColor(230, 230, 230))
+            p.setPen(QtCore.Qt.NoPen)
+            p.drawRoundedRect(opt.rect, 5, 5)
+            opt.rect = QtCore.QRect(opt.rect.x(), opt.rect.y(), int(opt.rect.width() * opt.progress / 100), opt.rect.height())
+            self.proxy().drawPrimitive(QtWidgets.QStyle.PE_IndicatorProgressChunk, opt, p)
+
+        if element == QtWidgets.QStyle.CE_ProgressBarGroove:
+            p.setPen(QtCore.Qt.transparent)
+            p.setBrush(QtCore.Qt.NoBrush)
+            p.drawRect(opt.rect)
+
+    def drawPrimitive(self, pe, opt, p, widget = ...):
+        if pe == QtWidgets.QStyle.PE_IndicatorProgressChunk:
+            p.setRenderHint(QtGui.QPainter.Antialiasing)
+            p.setPen(QtCore.Qt.NoPen)
+            p.setBrush(QtGui.QColor("#00B884"))
+            p.drawRoundedRect(opt.rect, 5, 5)
 
 
 if __name__ == "__main__":
