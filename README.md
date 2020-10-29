@@ -48,7 +48,7 @@ Python下载：
 ![](./README%20icons/baiducloud_logo.png) [百度云]()  
 
 步骤3  
-本项目使用以下第三方包：Pyqt5、PIL  
+本项目使用以下第三方包：Pyqt5、PIL、you-get  
 在Window下载：  
 ```commandline
 pip install Pyqt5

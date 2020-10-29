@@ -538,9 +538,10 @@ class VideoDownloader(QtWidgets.QMainWindow):
 
         self.p = QtCore.QProcess(self)
         self.p.readyReadStandardOutput.connect(self.read_output)
-        self.p.start(f"you-get --format={self.video_info[num - 1][1][index][3]} -f --no-caption {self.video_info[num-1][0]}")
+        self.p.start(f"you-get --format={self.video_info[num - 1][1][index][3]} -f --no-caption {self.video_info[num-1][0]} -o {self.filepath}")
 
     def read_output(self):
+        index = self.choose_vq.currentIndex()
         res = str(self.p.readAllStandardOutput())
         # print(res)
         current_size = re.search(r"(?<=%).*?(?=/)", res)
